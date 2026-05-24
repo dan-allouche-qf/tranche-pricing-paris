@@ -1,0 +1,35 @@
+# =============================================================================
+# Stress scenario: COVID-19 replay (2020-2021)
+# =============================================================================
+# Overlays on top of paris_intermediate. Replays the COVID environment: rent
+# moratorium during year 1, post-shock default uptick, modest price hold and
+# rate easing.
+# =============================================================================
+
+extends: paris_intermediate.yaml
+
+scenario:
+  name: stress_covid
+  description: "COVID-19 replay (2020-2021)."
+
+overlay:
+  rent:
+    moratorium_pct: 0.50      # 50% rent reduction year 1
+    duration_years: 1
+
+  credit:
+    pd_multiplier: 1.8
+    pd_lag_years: 1           # default surge in year 2 after moratorium ends
+    duration_years: 1
+
+  price_dynamics:
+    mu_shift_pct: -0.020
+    sigma_multiplier: 1.4
+    duration_years: 1
+
+  rates:
+    delta_bps: -50
+    duration_years: 1
+
+reporting:
+  highlight_tail_in_figures: true

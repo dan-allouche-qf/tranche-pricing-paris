@@ -1,0 +1,141 @@
+\section{Credit modelling}\label{sec:credit}
+
+We treat each apartment as a one-name obligor whose default time
+$\tau_i$ depends on a common factor and an idiosyncratic component.
+Three canonical specifications are implemented in
+\texttt{src/tranche\_pricing/credit/} and run on a shared Monte Carlo
+seed.
+
+\subsection{Gaussian one-factor copula}\label{ssec:gauss-copula}
+
+Following \autocite{Li2000, Vasicek2002}, each obligor's latent asset value
+$X_i$ is
+\begin{equation}
+X_i = \sqrt{\rho}\, M + \sqrt{1 - \rho}\, Z_i,
+\qquad M, Z_i \overset{\text{i.i.d.}}{\sim} \mathcal{N}(0, 1),
+\label{eq:gauss-copula}
+\end{equation}
+so that $\text{Corr}(X_i, X_j) = \rho$ for $i \neq j$ and each marginal is
+standard normal. Default times are derived under constant hazard
+$h = -\log(1 - p) / T$ from the uniform marginal $U_i = \Phi(X_i)$:
+$\tau_i = -\log(1 - U_i) / h$, capped at $\infty$ when $U_i \ge p$. The
+conditional default probability given the factor is
+\begin{equation}
+\Prob(\tau_i \le t \given M = m) = \Phi\!\left(
+\frac{\Phi^{-1}(1 - e^{-h t}) - \sqrt{\rho}\, m}{\sqrt{1 - \rho}}
+\right),
+\label{eq:cond-pd}
+\end{equation}
+which underlies the Vasicek (2002) large-portfolio limit we use as a
+control-variate for the senior tranche.
+
+\subsection{Student-t copula}\label{ssec:t-copula}
+
+The same factor structure is mixed with an inverse-chi-square scale to
+deliver $t_\nu$ marginals while preserving the linear correlation $\rho$:
+\begin{equation}
+X_i = \bigl(\sqrt{\rho}\, M + \sqrt{1 - \rho}\, Z_i\bigr) \cdot
+\sqrt{\nu / W}, \quad W \sim \chi^2_{\nu}.
+\label{eq:t-copula}
+\end{equation}
+The Gaussian copula is recovered as $\nu \to \infty$. For finite $\nu$ the
+Student-t copula features non-zero lower tail dependence,
+\begin{equation}
+\lambda_L(\rho, \nu) = 2\, t_{\nu + 1}\!\left(-\sqrt{(\nu + 1)\frac{1 - \rho}{1 + \rho}}\right),
+\label{eq:tail-dep}
+\end{equation}
+which \cref{fig:tail-dep} plots over a grid of $(\rho, \nu)$. The Gaussian
+copula has $\lambda_L \equiv 0$ for any $\rho < 1$; for $\nu = 5$ and
+$\rho = \rhoBaseline{}$ the t-copula carries
+$\lambda_L \approx 0.08$, a difference that propagates directly into the
+senior tranche's loss tail.
+
+\subsection{Cox doubly-stochastic intensity}\label{ssec:cox}
+
+The asset-value copulas above are static: default correlation comes
+from a single Gaussian draw of $M$ at $t = 0$. A doubly-stochastic
+intensity model lets the hazard rate vary over time through a macro
+factor. We adopt
+\begin{equation}
+\lambda_i(t) = \alpha + \beta\, Y_t, \qquad
+\mathrm{d}Y_t = \kappa (\theta - Y_t) \dt + \xi \sqrt{Y_t}\, \dW^Y_t,
+\label{eq:cox}
+\end{equation}
+with $Y_0 = \theta$ and the CIR positivity preserved by Euler full
+truncation. Default times are $\tau_i = \inf\{t : \int_0^t \lambda_i(s)\,
+\mathrm{d}s > E_i\}$, $E_i \sim \text{Exp}(1)$. Conditional on the path of
+$Y$, defaults are independent.
+
+\subsection{Vasicek (2002) large-portfolio limit}\label{ssec:vasicek-lpf}
+
+For sufficiently large portfolios under the Gaussian one-factor copula
+the cumulative loss converges (Vasicek 2002) to a deterministic function
+of the common factor:
+\begin{equation}
+\Prob(L \le \ell) =
+\Phi\!\left(\frac{\sqrt{1 - \rho}\,\Phi^{-1}(\ell) - \Phi^{-1}(p)}{\sqrt{\rho}}\right).
+\label{eq:vasicek-lpf}
+\end{equation}
+We use it (a) as a control variate for the senior tranche expected loss
+in the variance-reduction layer and (b) as a sanity-check benchmark for
+the MC estimator at the largest sample sizes reported in
+\cref{fig:mc-convergence}.
+
+\subsection{Student-t tail dependence derivation}\label{ssec:t-dep-derivation}
+
+Following \autocite{EmbrechtsMcNeilStraumann2002}, the lower tail
+dependence of a bivariate elliptical distribution with correlation $\rho$
+and degrees of freedom $\nu$ is, by definition,
+\begin{equation*}
+\lambda_L = \lim_{q \to 0^+}\Prob\bigl(U_2 \le q \mid U_1 \le q\bigr).
+\end{equation*}
+For the Student-t copula, the conditional Student-t representation
+yields the closed form quoted in \cref{eq:tail-dep}: the radial structure
+of the mixing scale ensures non-zero $\lambda_L$ for all $\nu < \infty$.
+The Gaussian copula is recovered in the limit $\nu \to \infty$ and has
+$\lambda_L \equiv 0$, the empirical critique of
+\autocite{DonnellyEmbrechts2010}.
+
+\subsection{Cox doubly-stochastic survival probability}\label{ssec:cox-survival}
+
+Conditional on the path of the macro factor $Y$, the survival probability
+to time $T$ of obligor $i$ is
+\begin{equation*}
+S_i(T \mid Y) = \exp\!\Big(-\int_0^T \lambda_i(s)\,\mathrm{d}s\Big).
+\end{equation*}
+For the CIR-affine parameterisation $\lambda_i(t) = \alpha + \beta Y_t$
+with $Y_t$ a CIR process, the unconditional survival probability is
+itself affine:
+\begin{equation*}
+S_i(T) = \exp\bigl(-\alpha T - \beta\,A(T)\bigr) \cdot \E\bigl[\exp(-\beta \cdot \text{integrated CIR})\bigr],
+\end{equation*}
+which has a known Laplace transform closed form (see
+\autocite{Schonbucher2003}, Chapter 7). We use it as a sanity test on the
+calibration: at the configured $(\kappa, \theta, \xi)$ the closed-form
+survival probability at $T = 10$ should agree with the empirical
+$1 - $ default-rate in our Monte Carlo to within MC noise.
+
+\subsection{Numerical comparison}
+
+\Cref{fig:loss-dist} overlays the simulated cumulative-loss histograms
+under each model at the Paris-intermediate calibration. All three deliver
+the same mean loss (matched by construction to the marginal default
+probability) but differ markedly in the right tail. The implications for
+tranche fair value are quantified in \cref{sec:results}.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\linewidth]{fig_tail_dependence.pdf}
+    \caption{Lower tail dependence $\lambda_L$ of the Student-t copula as a
+    function of $\rho$ for four values of $\nu$. Gaussian copula
+    ($\lambda_L \equiv 0$) plotted for reference.}
+    \label{fig:tail-dep}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\linewidth]{fig_loss_distributions.pdf}
+    \caption{Cumulative portfolio-loss density under the three credit
+    models. Vertical dashed lines mark each model's empirical $\VaR_{95}$.}
+    \label{fig:loss-dist}
+  \end{minipage}
+\end{figure}

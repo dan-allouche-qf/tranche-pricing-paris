@@ -1,0 +1,48 @@
+\section{The three investment vehicles}\label{sec:models}
+
+Throughout the paper we model a residential building made of $n$
+independent rental units, observed over a horizon $T$ years. The building's
+total par value at inception is $P_0$. Each apartment $i \in \{1, \ldots,
+n\}$ has a stochastic default time $\tau_i$ with cumulative probability
+$\Prob(\tau_i \le T) = p$ matched to a calibrated marginal hazard. The
+fraction $\ell_i \in [0, 1]$ of par lost when apartment $i$ defaults is
+drawn from a Beta distribution. The aggregate cumulative loss path is
+\begin{equation}
+L(t) = \frac{1}{n}\sum_{i = 1}^{n} \ell_i \,\mathbb{1}\{\tau_i \le t\},
+\qquad t \in [0, T].
+\label{eq:agg-loss}
+\end{equation}
+The building generates a net rental flow $R_t = (g - m)\, S_t\,(1 - L(t))$
+in monetary units, where $S_t$ is the market value, $g$ is the gross
+rental yield and $m$ the maintenance cost share, both expressed per year.
+
+\paragraph{Model A — Classical full ownership.}
+A single investor owns one apartment of the building (par $P_0 / n$). Cash
+flows in period $[t, t + \Delta t]$ are $R_t\, \Delta t / n$ while
+$\tau_1 > t$ and $0$ thereafter. At $T$ the apartment is sold at the
+prevailing market value $S_T / n$ regardless of any past default.
+
+\paragraph{Model B — SAS shareholders.}
+$n$ investors each buy one share of a SAS that holds the whole building.
+Each share receives the pro-rata net rent
+$R_t\, \Delta t / n$ each period and $S_T (1 - L(T)) / n$ at terminal.
+
+\paragraph{Model C — CDO-like tranches.}
+The same aggregate cash flow $R_t$ is partitioned across a stack of
+tranches $\tau = (\tau_\text{equity}, \tau_\text{mezz}, \tau_\text{senior})$
+with attach / detach points $(0, 0.25)$, $(0.25, 0.60)$ and $(0.60, 1.00)$.
+Tranche $\tau$ absorbs the cumulative loss via the stop-loss payoff
+\begin{equation}
+L_\tau(t) = \min\bigl(\max(L(t) - a_\tau, 0), d_\tau - a_\tau\bigr),
+\label{eq:stop-loss}
+\end{equation}
+and the periodic net rent is allocated waterfall-style: senior coupon
+first, then mezzanine, then equity collects the residual. At terminal the
+sale proceeds $S_T (1 - L(T))$ are paid back to surviving notionals in the
+same order.
+
+\begin{assumption}\label{ass:par}
+Total portfolio par is $P_0 = \nObligors \times 45\,\text{m}^2 \times
+10\,000\,\EUR / \text{m}^2 = \parTotal$ for the Paris-intermediate scenario
+that drives every numerical result reported below.
+\end{assumption}

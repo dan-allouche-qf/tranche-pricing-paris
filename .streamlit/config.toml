@@ -1,0 +1,20 @@
+# Streamlit Community Cloud configuration.
+#
+# Theming is aligned with the project's matplotlib palette
+# (`src/tranche_pricing/viz/style.py`) so the dashboard and the working
+# paper look like the same artefact.
+
+[theme]
+primaryColor = "#0072B2"       # senior tranche colour (Okabe-Ito)
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F4F4"
+textColor = "#222222"
+font = "serif"
+
+[server]
+headless = true
+runOnSave = false
+maxUploadSize = 25
+
+[browser]
+gatherUsageStats = false

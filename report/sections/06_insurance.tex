@@ -1,0 +1,100 @@
+\section{Pricing the rental-default insurance}\label{sec:insurance}
+
+Quoted French rental insurance (\textit{garantie loyers impayés}) is
+typically priced at around 2--3\% of the gross annual rent. We benchmark
+two consistent ways of valuing it endogenously: the actuarial
+standard-deviation principle and an option-theoretic put on rent
+shortfall.
+
+\subsection{Actuarial price}
+
+Following the classical \autocite{EmbrechtsMcNeilStraumann2002} treatment,
+the insurer absorbs a fraction $\kappa$ of every realised default loss and
+charges a premium
+\begin{equation}
+P_\text{act} = (1 + \theta)\, \E[L_\text{covered}] + \lambda\,
+\sigma(L_\text{covered}),
+\label{eq:act-premium}
+\end{equation}
+where $L_\text{covered} = \kappa \cdot L(T) \cdot P_0$ is the covered
+lifetime loss per portfolio path. We use the configured loadings
+$\theta = 0.10$ (admin) and $\lambda = 0.15$ (risk) and coverage $\kappa =
+\insuranceCoverage{}$. The premium can be paid as a lump sum at $t = 0$
+or, equivalently in PV terms, as a level annual payment over the horizon
+$T$. On the Paris-intermediate baseline the expected covered loss is
+$\E[L_\text{covered}] \approx \insuranceExpectedLoss{}$, which translates
+into an annual-equivalent premium of \insuranceAnnualPremium{}.
+
+\subsection{Option-theoretic price}
+
+Alternatively, insurance is a put on the periodic net rent. Let
+$R^{\text{prom}}_t$ denote the promised rent (full-tenancy rate net of a
+one-month deductible) and $R_t$ the realised flow. The insurer pays
+$\max(R^{\text{prom}}_t - R_t, 0)$ each period; under the simulated short
+rate $r_t$ the lump-sum premium is
+\begin{equation}
+P_\text{opt} = \E\left[\sum_{k=1}^{N} D(t_k)\,
+\max\bigl(R^{\text{prom}}_{t_k} - R_{t_k}, 0\bigr) \cdot \kappa
+\right],
+\qquad D(t_k) = \exp\!\Big(-\textstyle\int_0^{t_k} r_s\,\mathrm{d}s\Big).
+\label{eq:opt-premium}
+\end{equation}
+
+\subsection{Tranche-level allocation}\label{ssec:tranche-allocation}
+
+A first-pass implementation would subtract a flat annual premium from
+the aggregate net rent stream. That choice mis-allocates the burden
+across tranches: the senior, which absorbs almost no default loss in
+practice, would pay the same premium drag as the equity, which absorbs
+most of it. We instead allocate the premium proportional to each
+tranche's \emph{expected covered loss} under the no-insurance baseline:
+\begin{equation}
+w_\tau = \frac{\E[L_\tau(L(T))] \cdot \kappa}{\sum_{\tau'} \E[L_{\tau'}(L(T))] \cdot \kappa},
+\qquad \text{premium drag on } \tau = w_\tau \cdot P_{\text{act}} \cdot \Delta t.
+\label{eq:premium-allocation}
+\end{equation}
+With the calibrated parameters and the stop-loss attach/detach scheme
+$(0, 0.25), (0.25, 0.60), (0.60, 1)$ the equity tranche carries roughly
+$w_\text{equity} \approx 84\,\%$ of the premium, the mezzanine
+$\approx 16\,\%$, and the senior less than $1\,\%$ --- the
+seniority-aware allocation a fair pricing requires.
+
+\subsection{Side-by-side comparison on the calibrated baseline}\label{ssec:insurance-comparison}
+
+The two pricing approaches produce internally consistent but
+quantitatively different premiums on our Paris baseline:
+the standard-deviation principle bundles an explicit risk loading on
+top of the expected covered loss, while the option-theoretic price
+discounts only the realised shortfall under the simulated short rate.
+On the same MC paths the option-theoretic premium therefore sits
+\emph{below} the actuarial one. \Cref{tab:insurance-comparison} and
+\cref{fig:insurance-comparison} report the per-instrument fair-to-par
+under the three regimes.
+
+\input{tables/insurance_comparison}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_insurance_comparison.pdf}
+  \caption{Grouped bars of fair price / par across no insurance,
+  actuarial insurance, and option-theoretic insurance, under the
+  Gaussian one-factor copula baseline.}
+  \label{fig:insurance-comparison}
+\end{figure}
+
+Equity benefits the most from coverage under both pricing regimes —
+the structural cushion at $[0, 25\,\%]$ absorbs the bulk of the
+realised loss, so insuring 90\,\% of it sharply lifts its fair-to-par.
+The option-theoretic premium delivers a larger lift than the actuarial
+one because the actuarial loading $\lambda \cdot \sigma(L_{\mathrm{covered}})$
+is what investors pay for the systemic-risk hedge.
+
+\subsection{Discussion}
+
+The two prices coincide only for specific loadings; they differ here
+because the standard-deviation principle charges for total-loss
+variance whereas the option-theoretic price charges only for the
+realised shortfall. The gap quantifies the implicit risk premium the
+actuarial principle attaches to the systemic factor. Both prices are
+written to \texttt{artifacts/results\_meta.json}; the comparison table
+sits in \cref{sec:results}.

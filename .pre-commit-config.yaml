@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        exclude: ^report/
+      - id: end-of-file-fixer
+        exclude: ^(data/raw/|artifacts/|notebooks/)
+      - id: trailing-whitespace
+        exclude: ^(data/raw/|artifacts/|notebooks/)
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(src|tests|dashboard)/
+      - id: ruff-format
+        files: ^(src|tests|dashboard)/
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.9.1
+    hooks:
+      - id: nbstripout
+        files: \.ipynb$

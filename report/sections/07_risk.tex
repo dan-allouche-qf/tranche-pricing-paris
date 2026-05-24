@@ -1,0 +1,88 @@
+\section{Risk metrics}\label{sec:risk}
+
+For each instrument the simulation produces a per-path realised PV
+$V_\omega = \sum_k C_\omega(t_k) D(t_k) + V_\omega^T D(T)$. We convert this
+to an annualised geometric return $r_\omega = (V_\omega / P_\omega^0)^{1/T}
+- 1$ and report a wide risk summary on the empirical distribution of
+$\{r_\omega\}_{\omega = 1}^{n_{\text{paths}}}$.
+
+\paragraph{Tail measures.}
+\textbf{Value-at-Risk} at confidence $\alpha$ is the empirical quantile
+$\VaR_\alpha = -F^{-1}_r(1 - \alpha)$ in sign-positive convention.
+\textbf{Expected Shortfall} \autocite{AcerbiTasche2002} is
+$\ES_\alpha = -\E[r \given r \le F^{-1}_r(1 - \alpha)]$. We report
+$\alpha \in \{0.95, 0.99\}$.
+
+\paragraph{Risk-adjusted ratios.}
+The \textbf{Sharpe ratio} is $(\E[r] - r_f) / \sigma(r)$, where $r_f$ is
+the empirical mean of the simulated short-rate path; the
+\textbf{Sortino ratio} replaces the volatility by the downside-deviation
+around $r_f$; the \textbf{Omega ratio} at threshold $\theta$ is the gain-
+to-loss density ratio
+$\Omega(\theta) = \E[(r - \theta)_+] / \E[(\theta - r)_+]$; the
+\textbf{Calmar ratio} divides the mean annual return by the maximum
+drawdown of the cumulative cash-flow trajectory.
+
+\paragraph{Tracking error.}
+For Model A and Model B we also report tracking error vs the Notaires-INSEE
+price-index return, which approximates how closely the realised payoff
+follows the broader Paris market.
+
+All metrics are implemented in
+\texttt{src/tranche\_pricing/risk/metrics.py} and aggregated via the
+\texttt{summary()} helper that drives \cref{tab:headline} below.
+
+\paragraph{Acerbi-Tasche coherence of $\ES_\alpha$.}
+A risk measure $\rho$ on a probability space is coherent
+\autocite{AcerbiTasche2002} when it satisfies monotonicity, sub-additivity,
+positive homogeneity and translation invariance. $\VaR_\alpha$ violates
+sub-additivity on non-elliptical distributions — pooling two risky books
+can produce a $\VaR$ larger than the sum of their individual $\VaR$s, an
+artefact that gave rise to a literature on alternative quantile-based
+measures. $\ES_\alpha = -\E[r \mid r \le F^{-1}_r(1-\alpha)]$ resolves
+this: Acerbi and Tasche (2002) prove that the integrated tail expectation
+\begin{equation*}
+\ES_\alpha = -\frac{1}{1 - \alpha}\int_\alpha^1 F^{-1}_r(u)\,\mathrm{d}u
+\end{equation*}
+is coherent for all $\alpha \in (0, 1)$ on any integrable loss
+distribution. We report both: $\VaR_{95}$ for the regulatory
+convention, $\ES_{95}$ for the post-2008 view.
+
+\paragraph{Sharpe vs Sortino under a Gaussian return.}
+When $r$ is Gaussian with mean $\mu_r$ and volatility $\sigma_r$, the
+downside deviation around $r_f$ is
+\begin{equation*}
+\sigma^-_r = \sqrt{\E[(r_f - r)_+^2]}
+            = \sigma_r \sqrt{\Phi(z) + z\,\phi(z) - z^2 \Phi(z)},
+\quad z = (r_f - \mu_r)/\sigma_r,
+\end{equation*}
+so that the Sortino-to-Sharpe ratio is bounded above by $\sqrt 2$ in the
+extreme case $r_f \to -\infty$ and converges to $1$ as $r_f \to \mu_r$.
+Empirical Sortino divergences from this Gaussian benchmark therefore
+quantify the asymmetry of the return distribution, which is why the
+equity tranche shows a higher Sortino than Sharpe
+(\cref{fig:riskreturn-bars}).
+
+\paragraph{Risk-free benchmark choice.}
+Under the \texttt{vasicek\_simulated} discount convention the per-path
+mean of $r_t$ is itself stochastic; we use the path-averaged mean
+$\bar r = \E\bigl[\frac{1}{N}\sum_k r_{t_k}\bigr]$ as the Sharpe / Sortino
+benchmark. Under the \texttt{constant\_at\_initial\_rate} convention the
+benchmark collapses to $r_0$ (the spot rate at $t = 0$), reflecting the
+"current short rate" interpretation. Both choices are reported in
+\texttt{artifacts/results\_meta.json}.
+
+\paragraph{Bootstrap confidence intervals.}
+For each instrument the simulation produces a per-path PV vector
+$\{V_\omega\}_{\omega = 1}^{n_{\text{paths}}}$. We characterise the
+sampling uncertainty of the headline estimator $\bar V$ by a percentile
+bootstrap: at each of $B = 1\,000$ resamples we draw $n_{\text{paths}}$
+indices with replacement, compute the resample mean
+$\bar V^{(b)}$, and report the empirical
+$[2.5\,\%, 97.5\,\%]$ quantile of the $\{\bar V^{(b)}\}$ as the
+95\,\% confidence interval. The implementation
+(\texttt{pricing/tranche\_pricer.py::bootstrap\_fair\_price\_ci}) draws
+the resampling matrix in chunks of 200 to bound memory at
+$\mathcal{O}(B/200) \times n_{\text{paths}}$ instead of $B \times
+n_{\text{paths}}$, and uses a stream-dedicated PCG64 generator so the CIs
+are bit-identical across re-runs of the pipeline.

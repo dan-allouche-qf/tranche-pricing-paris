@@ -1,0 +1,67 @@
+% =============================================================================
+% Preamble — typography, math, tables, bibliography
+% =============================================================================
+
+\usepackage[a4paper, margin=2.4cm, footskip=1cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{amsmath, amssymb, mathtools, amsthm}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{siunitx}
+\sisetup{group-separator={\,}, group-minimum-digits=4, output-decimal-marker={.}}
+\usepackage{graphicx}
+\graphicspath{{figures/}{../artifacts/figures/}}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, labelsep=period}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle  = {Selling Property Rental Ownership: A Multi-Model Tranche-Pricing Study of Paris Residential Rent},
+  pdfauthor = {Dan Allouche},
+  pdfsubject = {Quantitative finance — credit risk, structured products, real estate},
+  pdfkeywords = {tranche pricing, CDO, copula, Vasicek, Merton, Monte Carlo, Paris real estate},
+}
+\usepackage[capitalise, noabbrev]{cleveref}
+\usepackage[round, sort&compress]{natbib}
+\bibliographystyle{plainnat}
+% Provide a \autocite alias for compatibility with the biblatex-style calls
+% in the section files.
+\newcommand{\autocite}[1]{\citep{#1}}
+\usepackage{eurosym}
+\providecommand{\EUR}{\euro}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, calc}
+
+% --- Theorem-like environments ---------------------------------------------- %
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}[definition]{Assumption}
+\newtheorem{proposition}[definition]{Proposition}
+
+% --- Math macros ------------------------------------------------------------ %
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\dW}{\mathrm{d}W}
+\newcommand{\dt}{\mathrm{d}t}
+\newcommand{\given}{\mid}
+\DeclareMathOperator{\VaR}{VaR}
+\DeclareMathOperator{\ES}{ES}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% --- Author block ----------------------------------------------------------- %
+\title{\bfseries\Large Selling Property Rental Ownership\\
+  \large\itshape A Multi-Model Tranche-Pricing Study of Paris Residential Rent}
+\author{Dan Allouche}
+\date{May 2026}

@@ -1,0 +1,81 @@
+\section{Waterfall mechanics}\label{sec:waterfall}
+
+The tranche cash flows follow the notional-depleting waterfall of
+\autocite{AndersenSideniusBasu2003}. Let $\tau \in \{\text{equity},
+\text{mezz}, \text{senior}\}$ index the tranches, with attach / detach
+points $(a_\tau, d_\tau)$ and initial notionals $N_\tau^0 = P_0 (d_\tau -
+a_\tau)$. Two waterfalls run in parallel.
+
+\paragraph{Loss allocation.}
+At every period $t_k$, the aggregate loss $L(t_k)$ defined in
+\cref{eq:agg-loss} is split across the stack by the stop-loss payoff
+\cref{eq:stop-loss}. The surviving tranche notional is $N_\tau(t_k) =
+N_\tau^0 - P_0 \cdot L_\tau(t_k)$. \Cref{fig:waterfall} illustrates the
+order in which a unit of aggregate loss flows across the stack: the equity
+tranche is wiped out for $L = 0.25$, the mezzanine for $L = 0.60$, and the
+senior absorbs only the residual beyond $0.60$.
+
+\paragraph{Interest waterfall.}
+Each period the net rent inflow $R_{t_k} \Delta t$ is distributed
+sequentially. Senior receives its promised coupon
+$c_\text{senior} \cdot N_\text{senior}(t_k) \cdot \Delta t$ first, capped
+by the available cash; mezzanine receives the same on its own notional out
+of what remains; equity collects whatever is left:
+\begin{align*}
+C_\text{senior}(t_k) &= \min\bigl( R_{t_k}\Delta t,\ c_\text{senior}
+N_\text{senior}(t_k) \Delta t \bigr), \\
+C_\text{mezz}(t_k) &= \min\bigl( R_{t_k}\Delta t - C_\text{senior}(t_k),\
+c_\text{mezz} N_\text{mezz}(t_k) \Delta t \bigr), \\
+C_\text{equity}(t_k) &= R_{t_k}\Delta t - C_\text{senior}(t_k) - C_\text{mezz}(t_k).
+\end{align*}
+The equity cash flow can be negative when defaults force the SAS to use
+reserves; in our simulation we floor net rent at zero before this
+allocation.
+
+\paragraph{Principal waterfall.}
+At the terminal date $T$ the building is sold at $V_T = S_T \cdot (1 -
+L(T))$ --- market price scaled by the surviving fraction of the portfolio.
+The proceeds repay senior first (up to $N_\text{senior}(T)$), then
+mezzanine (up to $N_\text{mezz}(T)$), and equity collects any residual.
+Equity therefore captures the property's capital appreciation \emph{net of
+the cumulative writedown}; this is the upside that justifies its first-loss
+status.
+
+\paragraph{ASB recursion in matrix form.}
+Let $N_\tau^{(k)}$ denote the notional of tranche $\tau$ at the end of
+period $k$, with the convention $N_\tau^{(0)} = N_\tau^0$. The
+notional-update rule is
+\begin{equation*}
+N_\tau^{(k)} = N_\tau^0 - P_0 \cdot L_\tau\bigl(L^{(k)}\bigr),
+\quad L^{(k)} = \sum_{i: \tau_i \le t_k} \tfrac{\ell_i}{n},
+\end{equation*}
+where the per-tranche loss $L_\tau$ follows the stop-loss payoff
+\cref{eq:stop-loss}. The interest waterfall at period $k$ is the
+sequential allocation
+\begin{equation*}
+C_\tau^{(k)} = \min\bigl(c_\tau N_\tau^{(k)} \Delta t,\ R^{(k)} - {\textstyle\sum_{\tau' > \tau}} C_{\tau'}^{(k)}\bigr),
+\quad \tau \in \{\text{senior}, \text{mezz}, \text{equity}\},
+\end{equation*}
+processed senior-to-junior. The principal waterfall at $T$ is the same
+recursion applied to the surviving sale proceeds
+$V_T = S_T(1 - L^{(N)})$, with the senior receiving back its remaining
+notional first, then the mezzanine, then the equity collecting whatever
+residual remains (which can include capital appreciation
+$V_T > \sum_\tau N_\tau^0$ when $S_T$ has grown).
+
+\paragraph{Fair coupon.}
+The fair coupon $c_\tau^{\star}$ of a tranche is the value that sets its
+present value equal to par at $t = 0$. We solve it for one tranche at a
+time using Brent's method on the pricing residual; the other tranches keep
+the contract coupons specified in \texttt{config/}. The fair-spread
+solution is available in \texttt{pricing/tranche\_pricer.py::solve\_fair\_coupon}
+and used in the supplementary sensitivity runs.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig_waterfall_explainer.pdf}
+  \caption{Tranche-by-tranche loss absorption as the aggregate cumulative
+  loss grows from zero to par. The dashed verticals mark the detach points
+  beyond which each tranche is exhausted.}
+  \label{fig:waterfall}
+\end{figure}

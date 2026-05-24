@@ -1,0 +1,31 @@
+# =============================================================================
+# Stress scenario: Global Financial Crisis replay (2008-2009)
+# =============================================================================
+# Overlays on top of paris_intermediate. Replays the 2008-2009 environment
+# observed on the Paris market: prices roll over (-7 to -9 % cumulative over
+# 18 months), vol spikes, defaults rise (banque-de-france household arrears
+# data ~2x the normal level over 2009-2010).
+# =============================================================================
+
+extends: paris_intermediate.yaml
+
+scenario:
+  name: stress_gfc
+  description: "Global Financial Crisis replay (2008-2009)."
+
+overlay:
+  price_dynamics:
+    mu_shift_pct: -0.080      # additive shift applied to mu for years 1-2
+    sigma_multiplier: 1.6     # vol multiplier for years 1-2
+    duration_years: 2
+
+  credit:
+    pd_multiplier: 2.0        # default rate multiplier
+    duration_years: 2
+
+  rates:
+    delta_bps: -100           # ECB cut path replayed
+    duration_years: 2
+
+reporting:
+  highlight_tail_in_figures: true

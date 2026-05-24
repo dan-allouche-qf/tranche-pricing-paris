@@ -1,0 +1,25 @@
+\begin{abstract}\noindent
+We study a hybrid real-estate investment structure in which the rental cash
+flows of a Paris residential building are partitioned into a senior /
+mezzanine / equity tranche stack akin to a synthetic CDO, and compare its
+risk-return profile to two classical benchmarks: outright single-apartment
+ownership (Model A) and a fully pooled SAS share (Model B). All market
+parameters are calibrated on French sources: \dataParisN{} quarterly observations of the
+Notaires-INSEE price index (\dataParisStart{}--\dataParisEnd{}), the INSEE
+\textit{Indice de Référence des Loyers}, and the French ten-year sovereign
+yield (FRED \texttt{IRLTLT01FRM156N}). Default times are simulated under
+three benchmark credit models — the Gaussian one-factor copula
+\autocite{Li2000, Vasicek2002}, the Student-t copula
+\autocite{EmbrechtsMcNeilStraumann2002} and a Cox doubly-stochastic
+intensity \autocite{DuffieSingleton2003} — coupled with a Vasicek short rate
+\autocite{Vasicek1977} and a geometric Brownian motion (with a Merton
+jump-diffusion extension \autocite{Merton1976}) for the property value. The
+tranche cash flows follow the Andersen-Sidenius-Basu (2003) waterfall and
+are priced by Monte Carlo with antithetic variance reduction and a Sobol
+QMC variant. On the Paris-intermediate scenario the senior fair value drops from
+\seniorFairGauss{} of par under the Gaussian copula to
+\seniorFairStudent{} under the Student-t copula, and the senior fair
+coupon widens by roughly twelve basis points --- a numerical
+illustration of the tail-dependence critique levelled at Li-style
+models post-2008 \autocite{DonnellyEmbrechts2010, MacKenzieSpears2014}.
+\end{abstract}

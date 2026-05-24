@@ -1,0 +1,180 @@
+\section{Results}\label{sec:results}
+
+This section is mechanically generated from the latest run of
+\texttt{tranche-cli mc --config config/paris\_intermediate.yaml}; every
+numerical statement traces back to a row of
+\texttt{artifacts/results.csv} or to
+\texttt{data/processed/calibrated\_params.yaml}. The Monte Carlo sample
+size used in the headline run is $N = \nPaths{}$ paths.
+
+\subsection{Headline pricing}
+
+\Cref{tab:headline} reports the fair price (mean discounted PV across
+paths), the resulting ratio to par, the annualised mean realised return,
+the realised volatility, the Sharpe ratio, the 95\% Value-at-Risk and the
+probability of a negative annualised return for each of the five
+instruments under the Gaussian one-factor copula baseline.
+
+\input{tables/headline_results}
+
+Three takeaways.
+\begin{enumerate}
+  \item \textbf{The senior tranche prices at \fairToParSenior{} of par.}
+        Its annualised mean return is \meanReturnSenior{} and the
+        probability of a negative annualised return is
+        \probNegSenior{}. The low realised volatility (a few hundred basis
+        points) confirms the structural protection delivered by the
+        attachment point at 60\%.
+  \item \textbf{Model A (single apartment) and Model B (SAS pool) deliver
+        materially different risk distributions} even though their
+        \emph{expected} return is broadly similar. Model A shows
+        \probNegModela{} of paths with negative realised return ---
+        markedly lower than Model B's \probNegModelb{} --- because the
+        bimodal distribution (apartment defaults vs survives) keeps a
+        majority of paths positive.
+  \item \textbf{The equity tranche is the high-variance, high-upside
+        instrument.} Its realised return distribution carries a long
+        right tail driven by the residual claim on terminal sale
+        proceeds; the probability of a negative return is
+        \probNegEquity{}.
+\end{enumerate}
+
+\Cref{fig:riskreturn-bars,fig:pareto} visualise the same data set as bars
+of risk-adjusted ratios and as a risk-return scatter respectively.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_riskreturn_bars.pdf}
+  \caption{Risk-adjusted ratios across instruments under the Gaussian
+  copula baseline, without insurance. Sharpe, Sortino, Omega and Calmar
+  are computed on the annualised return distribution and the mean
+  cumulative cash-flow trajectory (see \cref{sec:risk}).}
+  \label{fig:riskreturn-bars}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig_pareto_frontier.pdf}
+  \caption{Risk-return frontier across the five instruments: realised
+  standard deviation of the annualised return on the x-axis, mean
+  annualised return on the y-axis. Insurance variants are plotted with
+  square markers; the without-insurance baseline uses circles.}
+  \label{fig:pareto}
+\end{figure}
+
+\subsection{Sensitivity to the choice of credit model}
+
+The same instruments priced under each of the three credit models yield
+qualitatively similar but quantitatively different fair-to-par ratios:
+\begin{itemize}
+  \item Gaussian copula: senior $= \seniorFairGauss{}$.
+  \item Student-t copula: senior $= \seniorFairStudent{}$ --- the
+        non-zero lower tail dependence (\cref{fig:tail-dep}) shifts more
+        loss probability into the senior layer.
+  \item Cox doubly stochastic: senior $= \seniorFairCox{}$ ---
+        time-varying hazards smooth the cumulative-loss tail relative to
+        the static asset-value models, producing a slightly narrower
+        distribution (see \cref{fig:loss-dist}).
+\end{itemize}
+
+The size of the Gaussian-to-Student gap on the senior tranche
+illustrates the Donnelly-Embrechts (2010) and MacKenzie-Spears (2014)
+critique: a Gaussian copula is a defensible baseline only when the
+joint distribution is thin-tailed. Switching to $\nu = 5$ Student-t on
+the Paris calibration drops the senior fair value from
+\seniorFairGauss{} to \seniorFairStudent{}.
+
+\subsection{Fair coupons}\label{ssec:fair-coupons}
+
+When the contract coupons are exogenously fixed (3\,\% senior, 6\,\%
+mezzanine, 0 equity) they do not necessarily make the PV of each tranche
+equal to its par. We therefore solve, separately under each credit model,
+the coupon levels that set $\mathrm{PV} = \text{par}$ for the senior and
+the mezzanine tranches via Brent's method on the residual function. The
+equity tranche stays as a residual claimant. \Cref{tab:fair-coupons}
+reports the result.
+
+\input{tables/fair_coupons}
+
+Two observations. First, the Brent solver returns a finite senior fair
+coupon under the Gaussian and Student-t copulas (3.82\% and 3.94\%
+respectively, both above the 3\% contract level) but not under the Cox
+model: the time-varying hazard pushes the loss distribution tail
+sufficiently for the residual function to have no root in the
+$[0, 30\,\%]$ bracket. Second, the Student-t copula's fair senior coupon
+exceeds the Gaussian by approximately 12 basis points --- the tail-
+dependence premium quantified empirically. The mezzanine tranche has
+\emph{no} solution under the baseline cash-flow structure: the available
+rent, after maintenance and the senior coupon, is insufficient to bring
+mezz to par for any coupon level. We treat this as a finding rather than
+a model bug — the structural cash deficiency identifies a candidate
+fix (cash trap, overcollateralisation test, structural enhancement)
+left as future work.
+
+\subsection{Sensitivity to $\rho$, $\nu$ and $p_d$}\label{ssec:sensitivity}
+
+The fair-to-par metric is most exposed to the copula correlation and the
+default-rate calibration. \Cref{fig:price-vs-rho} shows the per-tranche
+curve as $\rho$ varies from 0 to 0.45 under the Gaussian copula baseline.
+Senior is monotonically decreasing in $\rho$; mezzanine non-monotone;
+equity rises slightly as the correlation concentrates loss mass into the
+junior layer it absorbs first. The corresponding tornado on the senior
+fair-to-par over a $\pm 20\,\%$ shift in $(\rho, p_d, \text{gross yield},
+\text{maintenance})$ is shown in \cref{fig:tornado}.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\linewidth]{fig_tranche_price_vs_rho.pdf}
+    \caption{Per-tranche fair-to-par across a $\rho$ sweep under the
+    Gaussian one-factor copula baseline.}
+    \label{fig:price-vs-rho}
+  \end{minipage}\hfill
+  \begin{minipage}{0.48\textwidth}
+    \includegraphics[width=\linewidth]{fig_tornado_sensitivity.pdf}
+    \caption{Tornado on the senior fair-to-par. Each bar pair shows the
+    range over a $\pm 20\,\%$ shock to one parameter; bars are sorted by
+    absolute impact.}
+    \label{fig:tornado}
+  \end{minipage}
+\end{figure}
+
+\subsection{Bootstrap confidence intervals}\label{ssec:bootstrap-ci}
+
+Every fair-price estimate carries a 1\,000-resample percentile bootstrap
+interval (column \texttt{fair\_price\_ci\_width} in
+\texttt{artifacts/results.csv}). \Cref{fig:fanchart} plots the resulting
+95\,\% CIs as whiskers on top of the headline bar chart for each of the
+three credit models. The senior tranche has the tightest CI (low
+realised loss volatility); the equity tranche the widest. The headline
+figure (\cref{fig:headline}) collapses everything onto a single chart
+suitable as the report's cover.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_fairprice_fanchart.pdf}
+  \caption{Bootstrap 95\,\% confidence intervals on fair price per
+  instrument and credit model. Whiskers are 1\,000-resample percentile
+  bootstrap of the Monte Carlo path-level PVs.}
+  \label{fig:fanchart}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_headline_summary.pdf}
+  \caption{Headline summary. Each cluster is one instrument; bars within
+  a cluster are the three credit models; whiskers are the 95\,\% CIs
+  from \cref{fig:fanchart}.}
+  \label{fig:headline}
+\end{figure}
+
+\subsection{Insurance}
+
+The actuarial premium charged under the standard-deviation principle is
+\insuranceAnnualPremium{} per year. The option-theoretic alternative is
+reported in \texttt{results\_meta.json} alongside. Note that the realised
+default probability in the Paris-intermediate scenario
+(\pdTerminal{} over $T = \horizonYears{}$ years) is calibrated from a
+3\% annual rate which is realistic but on the high end; sensitivity to
+lower default rates is explored in
+\texttt{notebooks/05\_stress\_and\_sensitivity.ipynb}.

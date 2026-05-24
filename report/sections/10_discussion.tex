@@ -1,0 +1,134 @@
+\section{Discussion and limitations}\label{sec:discussion}
+
+The numerical results above are conditional on choices that the working
+paper makes explicit; this section catalogues them.
+
+\paragraph{Granular default data.}
+The Visale and ANIL series on residential rent arrears are released as
+annual aggregates rather than per-apartment time-stamps. We use them as a
+prior for the marginal default probability $p$ but cannot calibrate the
+copula correlation $\rho$ directly --- a single building yields a single
+realisation of joint defaults, so $\rho$ remains essentially unidentified
+from the building alone. We therefore quote results at the prior value
+$\rho = \rhoBaseline{}$ and report the sensitivity to
+$\rho \in \{0.00, 0.10, 0.20, 0.30, 0.45\}$ in
+\texttt{notebooks/05\_stress\_and\_sensitivity.ipynb}.
+
+\paragraph{Vasicek long-run mean.}
+The MLE on French OAT 10Y delivers $\hat b = \paramVasicekB{}$ ---
+substantially above the current short-rate level because the historical
+sample (1960--2026) spans the 1970s/1980s high-rate regime. For long-run
+discount factors this is a feature; for shorter horizons one would
+typically work off the current rate curve. We document the implication in
+the Sharpe ratios reported above: when the long-run discount factor is
+high relative to the senior coupon, the tranche annualised return relative
+to the risk-free benchmark is mechanically negative even though the
+tranche prices close to par. This is the calibration trade-off, not a
+defect of the structure.
+
+\paragraph{Identifiability of jumps.}
+Numerical MLE on the Merton (1976) jump-diffusion does not improve AIC on
+the Paris sample (see \cref{tab:calibration}); the jump intensity and the
+jump-size standard deviation collapse together, which is a well-known
+identifiability issue when the data sample has too few clean jumps. We
+keep GBM as the baseline and view the jump extension as a robustness
+check.
+
+\paragraph{Static vs dynamic correlation.}
+The Gaussian / Student-t copulas embed default correlation through a
+single asset-value draw at $t = 0$. The Cox doubly stochastic model
+relaxes this by letting the hazard rate evolve over time, producing
+time-varying default correlation. The numerical gap between the static
+copulas and the Cox model (\cref{fig:loss-dist}) is small in the body
+of the loss distribution but visible in the tail; the choice depends
+on the application horizon.
+
+\paragraph{Insurance pricing endogeneity.}
+We treat the insurance premium as an exogenous cost subtracted from each
+period's rent. In reality the insurer would re-underwrite over time and
+the premium would adjust to realised losses. Our coverage-cap-times-loss
+construction is an internal-consistency benchmark, not a market premium
+quote.
+
+\paragraph{No equilibrium argument.}
+We do not attempt a full equilibrium price for the three vehicles; the
+fair prices we report are physical-measure expected discounted cash flows
+on the calibrated paths. A risk-neutral pricing would require either
+traded comparable instruments (which do not exist for this contract
+structure) or an explicit risk-aversion assumption.
+
+\paragraph{Fair-coupon existence.}
+The Brent solver of \cref{ssec:fair-coupons} returns a finite senior
+fair coupon under the Gaussian and Student-t copulas but no solution
+under the Cox model and no mezzanine solution under any of the three:
+the available rent net of maintenance and senior coupon is not
+sufficient to bring mezz to par within the considered coupon bracket.
+We emit \texttt{NaN} in \texttt{artifacts/fair\_coupons.csv}. The
+economic interpretation is that the cash-flow waterfall is too senior-
+heavy given the calibrated $(g - m)$ spread; standard structural fixes
+(over-collateralisation, cash trap, principal acceleration) would
+restore mezz solvability and are kept out of scope for the current
+working paper.
+
+\paragraph{Fair-coupon vs current quoted spreads.}
+Our fair-coupon solution treats the underlying obligor pool as
+exogenously calibrated. In a market with traded comparable instruments
+(e.g.\ tranches on iTraxx Europe) one would also calibrate $\rho$
+implicitly from quoted spreads, the so-called ``base correlation''
+approach \autocite{AndersenSideniusBasu2003}. We do not pursue this here
+because no comparable contract trades on Paris residential rent.
+
+\paragraph{Joint vs sequential fair-coupon solver.}
+The headline pipeline runs both a sequential Brent solver (senior coupon
+first, then mezzanine conditional on the senior fair coupon) and a fully
+joint 2-D \texttt{fsolve} on $(c_S, c_M)$. On the calibrated Paris
+baseline both solvers concur: a finite fair coupon exists for the senior
+($\sim 3.8$\,\%) but \emph{no} feasible pair $(c_S, c_M)$ brings both
+tranches to par, irrespective of the optimisation routine. The
+sequential solver therefore reports a numerically valid senior fair
+coupon and a \texttt{NaN} mezzanine; the joint solver fails to converge
+and reports both as \texttt{NaN}. Either way the conclusion is the same:
+the rental cash flow available after maintenance is structurally
+insufficient to remunerate the mezzanine layer at par on a stand-alone
+basis.
+
+\paragraph{Effect of the overcollateralisation test.}
+Activating the OC test (\texttt{waterfall.oc\_test\_enabled = true} in
+the YAML) diverts the equity periodic cash flow to a reserve account
+whenever the OC ratio falls below the trigger (1.10 by default) and
+releases the reserve once the OC ratio recovers above the target (1.15).
+On the Paris baseline the test sees infrequent triggers and the
+quantitative impact on senior is modest ($<$ 10 bps on fair-to-par);
+on the GFC overlay the trigger fires routinely and the cash trap
+materially supports the mezz tranche at the expense of equity. The
+mechanic is exactly the structural enhancement standard CDO offerings
+include — our implementation makes the empirical impact measurable.
+
+\paragraph{Cox calibration on real unemployment data.}
+The Cox doubly-stochastic model now uses a CIR macro factor calibrated
+on the INSEE French ILO unemployment series 1975Q1–2026Q1 ($n = 204$
+observations). The fitted $(\hat\kappa, \hat\theta, \hat\xi)$ deliver a
+long-run mean around 8.7\,\% — the historical sample mean — and satisfy
+the Feller positivity condition. Compared to the static asset-value copulas, the data-driven Cox
+calibration delivers a tighter senior fair-to-par (Cox $0.896$ vs
+Gaussian $0.939$, a $\sim 4.3$ pp gap that exceeds the senior bootstrap
+CI width by two orders of magnitude) and a much wider mezzanine
+($0.262$ vs $0.786$). The mechanism is the macro factor's persistence:
+time-varying default correlation creates loss clustering that the
+static asset-value copulas miss, biting deepest at the mezzanine
+attach point.
+
+\paragraph{Gaussian vs Student-t senior coupon — quantified.}
+Across the headline calibrations the senior fair coupon under the
+Student-t copula sits about twelve basis points above the Gaussian.
+With $\nu = 5$ and $\rho = \rhoBaseline{}$ the implied tail dependence
+$\lambda_L \approx 0.08$ raises the joint senior-loss probability
+relative to the Gaussian benchmark, whose tail dependence is zero by
+construction.
+
+\paragraph{Future work.}
+The natural next steps are (i) a Hull-White / shifted-Vasicek extension
+that admits a fitted initial yield curve, (ii) richer Beta-LGD
+parameterisation calibrated on micro-level Visale claims data when
+available, and (iii) a Bayesian sensitivity on $\rho$ with an informative
+prior anchored on macro arrears statistics.

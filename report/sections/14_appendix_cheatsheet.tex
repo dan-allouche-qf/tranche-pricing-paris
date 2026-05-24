@@ -1,0 +1,90 @@
+\section{Equation cheat-sheet}\label{app:cheatsheet}
+
+Single-page summary of every closed-form result used in the paper. Cross
+references point back to the section in which the equation is derived in
+context.
+
+\paragraph{Property price (Section \ref{sec:dynamics}).}
+\begin{align*}
+\mathrm{d}S_t &= \mu S_t\,\dt + \sigma S_t\, \dW_t, \\
+S_{t+\Delta t} &= S_t \exp\bigl((\mu - \sigma^2/2)\Delta t + \sigma\sqrt{\Delta t}\, Z\bigr),\quad Z\sim\mathcal{N}(0,1).
+\end{align*}
+Merton (1976) jump-diffusion (\cref{sec:dynamics}):
+\begin{equation*}
+\mathrm{d}S_t / S_t = (\mu - \lambda \kappa)\dt + \sigma \dW_t + (J - 1)\, dN_t,
+\quad N_t \sim \mathrm{Poi}(\lambda),\, \log J \sim \mathcal{N}(\mu_J, \sigma_J^2).
+\end{equation*}
+
+\paragraph{Short rate (Section \ref{sec:dynamics}).}
+Vasicek (1977):
+\begin{align*}
+\mathrm{d}r_t &= a(b - r_t)\, \dt + \sigma_r\, \dW_t, \\
+r_{t+\Delta t} \mid r_t &\sim \mathcal{N}\!\left( b + (r_t - b)e^{-a\Delta t},\, \frac{\sigma_r^2}{2a}\bigl(1 - e^{-2a\Delta t}\bigr) \right).
+\end{align*}
+Zero-coupon bond price ($P = \exp(A - B r)$ with the usual $A, B$):
+\begin{equation*}
+P(t, T \mid r_t) = \exp\!\Big(\Big(b - \tfrac{\sigma_r^2}{2 a^2}\Big)(B - (T - t)) - \tfrac{\sigma_r^2 B^2}{4a} - B r_t\Big),
+\quad B = \tfrac{1 - e^{-a(T - t)}}{a}.
+\end{equation*}
+
+\paragraph{Credit models (Section \ref{sec:credit}).}
+Gaussian one-factor:
+\begin{equation*}
+X_i = \sqrt{\rho}\,M + \sqrt{1 - \rho}\,Z_i,\ M, Z_i \sim \mathcal{N}(0,1),
+\quad
+\Prob(\tau_i \le t \mid M) = \Phi\!\Big(\tfrac{\Phi^{-1}(1 - e^{-h t}) - \sqrt{\rho}\, m}{\sqrt{1 - \rho}}\Big).
+\end{equation*}
+Student-t copula tail dependence:
+\begin{equation*}
+\lambda_L(\rho, \nu) = 2\, t_{\nu + 1}\!\Big(-\sqrt{(\nu + 1)\tfrac{1 - \rho}{1 + \rho}}\Big).
+\end{equation*}
+Cox doubly stochastic:
+\begin{equation*}
+\lambda_i(t) = \alpha + \beta\,Y_t,\
+\mathrm{d}Y_t = \kappa(\theta - Y_t)\dt + \xi\sqrt{Y_t}\,\dW^Y_t,\
+\tau_i = \inf\{t : \int_0^t \lambda_i(s)\,ds > E_i\},\ E_i \sim \mathrm{Exp}(1).
+\end{equation*}
+
+\paragraph{Tranche stop-loss (Section \ref{sec:waterfall}).}
+\begin{equation*}
+L_\tau(L) = \min\bigl(\max(L - a_\tau, 0), d_\tau - a_\tau\bigr).
+\end{equation*}
+
+\paragraph{Insurance pricing (Section \ref{sec:insurance}).}
+Actuarial (standard-deviation principle):
+\begin{equation*}
+P_{\text{act}} = (1 + \theta)\,\E[L_{\text{covered}}] + \lambda_{\text{load}}\,\sigma(L_{\text{covered}}),
+\quad L_{\text{covered}} = \kappa \cdot L(T) \cdot P_0.
+\end{equation*}
+Option-theoretic (level annual premium $P_{\text{opt}}$):
+\begin{equation*}
+P_{\text{opt}} = \E\!\left[\sum_k D(t_k)\,\max\bigl(R^{\text{prom}}_{t_k} - R_{t_k}, 0\bigr) \cdot \kappa\right],
+\quad D(t_k) = \exp\!\Big(-\textstyle\int_0^{t_k} r_s\,\mathrm{d}s\Big).
+\end{equation*}
+Per-tranche allocation weights:
+\begin{equation*}
+w_\tau = \frac{\E[L_\tau(L(T))] \cdot \kappa}{\sum_{\tau'} \E[L_{\tau'}(L(T))] \cdot \kappa}.
+\end{equation*}
+
+\paragraph{Risk metrics (Section \ref{sec:risk}).}
+\begin{align*}
+\VaR_\alpha &= -F_r^{-1}(1 - \alpha),
+& \ES_\alpha &= -\E[r \mid r \le F_r^{-1}(1 - \alpha)], \\
+\text{Sharpe} &= \frac{\E[r] - r_f}{\sigma(r)},
+& \text{Sortino} &= \frac{\E[r] - r_f}{\sqrt{\E[(r_f - r)_+^2]}}, \\
+\text{Calmar} &= \frac{\E[r]}{|\mathrm{MaxDD}|},
+& \Omega(\theta) &= \frac{\E[(r - \theta)_+]}{\E[(\theta - r)_+]}.
+\end{align*}
+
+\paragraph{Bootstrap CI (Sections \ref{sec:risk}, \ref{sec:results}).}
+For each instrument with per-path PVs $\{V_\omega\}$, the
+$1 - \alpha$ percentile-bootstrap CI on $\E[V]$ is
+\begin{equation*}
+[\hat q_{\alpha/2}, \hat q_{1 - \alpha/2}],\
+\text{where } \hat q_p = \text{empirical } p\text{-quantile of }\bigl\{\bar V^{(b)}\bigr\}_{b = 1}^{B},
+\end{equation*}
+and $\bar V^{(b)} = \frac{1}{n}\sum_{i=1}^n V_{I_{i,b}}$ with
+$I_{i,b}$ drawn uniformly at random from $\{1, \ldots, n\}$ with
+replacement. The implementation in
+\texttt{tranche\_pricing/pricing/tranche\_pricer.py::bootstrap\_fair\_price\_ci}
+draws $B = 1\,000$ resamples in chunks of 200.

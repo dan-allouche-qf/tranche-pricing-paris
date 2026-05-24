@@ -1,0 +1,79 @@
+\section{Monte Carlo design}\label{sec:monte_carlo}
+
+\paragraph{Streams.} Each random source has its own PCG64 generator derived
+from a single master \texttt{SeedSequence}: \texttt{price}, \texttt{rate},
+\texttt{credit}, \texttt{lgd}, \texttt{qmc}. This guarantees
+\emph{bit-identical} reproducibility across runs while keeping the streams
+independent, which is the requirement for the variance-reduction
+techniques to behave as expected (see
+\texttt{tests/unit/test\_engine.py}).
+
+\paragraph{Antithetic — formal variance reduction.}
+Let $f$ be a measurable function of an independent Gaussian sample
+$Z_1, \ldots, Z_n$. For any $i$ the antithetic pair $(Z_i, -Z_i)$ has
+perfect negative correlation $\rho = -1$. For a linear functional
+$f(z) = a + b\,z$ the pair average $\bar f_i = (f(Z_i) + f(-Z_i))/2 = a$
+is deterministic and the variance vanishes; for any monotone $f$ the
+Hoeffding lemma gives $\Cov(f(Z), f(-Z)) \le 0$, so $\Var(\bar f) \le
+\Var(f(Z))/2$. Glasserman (2003, Section 4.2) formalises the general
+result: for any $f$ that is monotone in each component of $z$,
+\begin{equation*}
+\Var\!\left(\frac{1}{n}\sum_i \bar f_i\right) \le \Var\!\left(\frac{1}{n}\sum_i f(Z_i)\right),
+\end{equation*}
+so antithetic never hurts on monotone estimands and strictly helps on
+linear ones. The senior tranche expected loss is approximately linear
+in the common factor below the attach point, which is why
+\cref{fig:mc-convergence} shows the antithetic standard error roughly
+five times below the plain MC at every sample size.
+
+\paragraph{Control variate from the Vasicek (2002) LPF.}
+The large-portfolio limit \cref{eq:vasicek-lpf} delivers a closed-form
+expected loss $\mathbb{L}^{\mathrm{LPF}} = \E[L \mid \text{LPF}]$ that is
+highly correlated with the MC estimator $\hat L_n$ on finite portfolios.
+The control-variate-adjusted estimator
+\begin{equation*}
+\hat L_n^{\mathrm{cv}} = \hat L_n - \hat\beta \bigl(\mathbb{L}^{\mathrm{LPF}}_{\text{MC}} - \mathbb{L}^{\mathrm{LPF}}\bigr),
+\quad \hat\beta = \frac{\widehat{\Cov}(L, L^{\mathrm{LPF}})}{\widehat{\Var}(L^{\mathrm{LPF}})}
+\end{equation*}
+has variance reduced by a factor $1 - \rho_{L, L^\mathrm{LPF}}^2$ relative
+to $\hat L_n$. In our 70-obligor portfolio the empirical correlation is
+above 0.95, so the variance reduction is comparable to the antithetic
+gain. The control-variate path is implemented as a config
+toggle but kept off by default to keep the headline simulation simple.
+
+\paragraph{Quasi-Monte Carlo.}
+For the copula common factor we provide a Sobol-based QMC alternative
+\autocite{Owen1997}. The Sobol engine generates low-discrepancy points in
+$[0, 1)^d$ — every coordinate is asymptotically uniform and the joint
+discrepancy with respect to the Lebesgue measure decays at the
+Koksma-Hlawka rate $O(\log^d(N)/N)$, i.e.\ $O(N^{-1})$ up to
+logarithmic factors once $N$ grows past the dimension. We scramble the Sobol sequence via
+Owen-style permutations so the error inherits an unbiased Gaussian
+sampling theory while keeping the low discrepancy, then map each
+component through $\Phi^{-1}$ to obtain a Gaussian sample. The
+implementation lives in \texttt{simulation/qmc.py}; activating it
+requires setting \texttt{use\_qmc=True} in \texttt{SimulationConfig}. The
+empirical gain is largest when the integrand is smooth in the common
+factor — for the tail-heavy senior-loss estimator the practical gain is
+modest, as confirmed in \cref{fig:mc-convergence}.
+
+\paragraph{Empirical convergence.} \Cref{fig:mc-convergence} reports the
+realised standard error of the senior tranche expected PV over $K = 12$
+independent simulations at each sample size $N \in \{256, 512, 1024,
+2048, 4096, 8192\}$. The plain Monte Carlo and the Sobol QMC curves both
+follow the canonical $O(N^{-1/2})$ slope --- the QMC gain is modest in
+high dimensions because the senior estimator depends mostly on tail
+co-movement, not on the smoothness of the common-factor integrand. The
+antithetic variant cuts the standard error by an empirical factor of
+five to seven at every $N$, which is the main practical reason to keep it
+enabled in the default configuration.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig_mc_convergence.pdf}
+  \caption{Empirical standard error of the senior tranche expected PV as
+  a function of the number of Monte Carlo paths. Reference slopes
+  $O(N^{-1/2})$ (dashed) and $O(N^{-1})$ (dotted) anchored at the
+  leftmost point.}
+  \label{fig:mc-convergence}
+\end{figure}

@@ -1,0 +1,28 @@
+
+\begin{table}[ht]
+\centering
+\caption{Calibrated parameter point estimates with maximum-likelihood standard errors.}
+\label{tab:calibration}
+\small
+\begin{tabular}{lllllll}
+\toprule
+Model & Series & Parameter & Estimate & Std.\ error & LL & AIC \\
+\midrule
+GBM (Paris)        & Notaires/INSEE & $\mu$        & 0.0335 & 0.0070    & \multirow{2}{*}{334.5} & \multirow{2}{*}{-665.0} \\
+                   &                & $\sigma$     & 0.0408 & 0.0025 & & \\
+\midrule
+Merton             & Notaires/INSEE & $\mu$        & 0.0335 &     ---     & \multirow{5}{*}{334.5} & \multirow{5}{*}{-659.0} \\
+                   &                & $\sigma$     & 0.0401 &     ---     & & \\
+                   &                & $\lambda$    & 0.3947 &     ---     & & \\
+                   &                & $\mu_J$      & -0.0099 &     ---     & & \\
+                   &                & $\sigma_J$   & 0.0022 &     ---     & & \\
+\midrule
+Vasicek (OAT 10Y)  & FRED IRLTLT01FRM156N & $a$    & 0.0163 & 0.0244    & \multirow{3}{*}{3716.1} & \multirow{3}{*}{-7426.2} \\
+                   &                      & $b$    & 0.0440 & 0.1304 & & \\
+                   &                      & $\sigma_r$ & 0.0078 & 0.0102 & & \\
+\bottomrule
+\end{tabular}
+\par\vspace{0.4em}\footnotesize\textit{Sample periods:
+Notaires Paris 1992-03-31--2025-12-31 ($n=136$);
+OAT 10Y 1960-01-01--2026-04-01 ($n=796$).}
+\end{table}

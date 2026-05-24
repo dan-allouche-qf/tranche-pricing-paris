@@ -1,0 +1,41 @@
+\subsection{Stress backtest}\label{ssec:stress-backtest}
+
+The three stress YAML overlays bundled under \texttt{config/} replay the
+2008 global financial crisis, the 2020 COVID shock and the 2022
+rate-hike cycle by perturbing the calibrated baseline along three axes:
+GBM drift / volatility, default-probability multiplier, and short-rate
+shift. The headline pipeline now applies each overlay and writes the
+per-tranche outcomes to \texttt{artifacts/stress\_results.csv}.
+
+\input{tables/stress_results}
+
+\Cref{tab:stress} carries three results.
+\begin{enumerate}
+  \item \textbf{Senior tranche resilience.} Even in the GFC replay, where
+        the default-rate multiplier reaches $\times 2$ and the price
+        drift is shifted by $-8\,\%$, the senior fair price falls only
+        to $\sim 0.78$ of par --- a bounded $\sim 22\%$ loss. The
+        $60\%$ attach point caps senior loss.
+  \item \textbf{Equity wipe-out.} The same GFC overlay annihilates the
+        equity tranche (fair-to-par close to zero): equity is the
+        levered bet on macro conditions.
+  \item \textbf{COVID vs rate hike.} The COVID overlay (50\,\% rent
+        moratorium in year 1 plus default surge in year 2) produces
+        worse outcomes than the rate-hike replay on every tranche:
+        equity is more impaired and the senior drops slightly more,
+        consistent with COVID combining a default-surge shock with a
+        discount-side benefit that does not offset the lost cash flow.
+\end{enumerate}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\linewidth]{fig_stress_heatmap.pdf}
+  \caption{Annotated heatmap of fair price / par per (instrument,
+  scenario) under the Gaussian one-factor copula baseline.}
+  \label{fig:stress-heatmap}
+\end{figure}
+
+Together with the heatmap of \cref{fig:stress-heatmap}, this table is the
+empirical justification for treating the senior tranche as an investment-
+grade instrument and the equity tranche as a high-yield / high-variance
+position.

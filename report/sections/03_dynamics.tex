@@ -1,0 +1,110 @@
+\section{Market dynamics}\label{sec:dynamics}
+
+\subsection{Property price}
+
+The building's market value $S_t$ follows geometric Brownian motion under
+the physical measure:
+\begin{equation}
+\mathrm{d}S_t = \mu\, S_t\, \dt + \sigma\, S_t\, \dW_t.
+\label{eq:gbm}
+\end{equation}
+By Itô's lemma applied to $f(S) = \log S$,
+\begin{equation*}
+\mathrm{d}\log S_t = \bigl(\mu - \tfrac{1}{2}\sigma^2\bigr)\dt + \sigma\, \dW_t,
+\end{equation*}
+so $\log S_{t + \Delta t} - \log S_t \sim \mathcal{N}\bigl((\mu - \sigma^2/2)\Delta t,\ \sigma^2 \Delta t\bigr)$
+exactly. The maximum-likelihood estimator on $n$ equally-spaced
+log-returns $r_i$ is therefore in closed form:
+\begin{equation*}
+\hat\sigma^2 = \frac{\mathrm{Var}(r)}{\Delta t},
+\qquad
+\hat\mu = \frac{\bar r}{\Delta t} + \tfrac{1}{2}\hat\sigma^2,
+\end{equation*}
+with asymptotic standard errors $\mathrm{SE}(\hat\sigma) =
+\hat\sigma / \sqrt{2(n - 1)}$ and a delta-method extension for $\hat\mu$.
+\Cref{eq:gbm} is discretised by exact log-Euler:
+$S_{t + \Delta t} = S_t \exp\bigl( (\mu - \sigma^2 / 2)\Delta t + \sigma
+\sqrt{\Delta t}\, Z \bigr)$, $Z \sim \mathcal{N}(0, 1)$. Parameters are
+estimated by closed-form MLE on the quarterly log-return series of the
+Notaires-INSEE Paris flats index (\dataParisN{} quarters, \dataParisStart{}
+through \dataParisEnd{}). The fitted point estimates --- summarised in
+\cref{tab:calibration} --- are $\hat\mu = \paramGbmMu{}$ and $\hat\sigma =
+\paramGbmSigma{}$, with the visual diagnostics of \cref{fig:calib} indicating
+mild departure from normality in the lower tail.
+
+As a robustness extension we also estimate the Merton (1976)
+jump-diffusion in which $S_t$ is augmented by a compound-Poisson jump
+component $\sum_{k=1}^{N_t} (J_k - 1)$ with $N_t \sim \text{Poisson}(\lambda)$
+and $\log J_k \sim \mathcal{N}(\mu_J, \sigma_J^2)$. Numerical MLE on the
+truncated Poisson-mixture density does not deliver a likelihood improvement
+on the Paris sample (see \cref{tab:calibration}): with $\hat\lambda$
+collapsing close to $0$ and $\hat\sigma_J$ close to $0$, the jump
+component is not separately identified. The empirical signature of
+volatility clustering in the squared log-returns (\cref{fig:calib}, panel
+d) is present at the first lags but the sample is too short for the
+jump-diffusion parameters to be separately recovered. We retain GBM as
+the baseline and note this finding explicitly.
+
+\subsection{Short rate}
+
+Discounting and option-theoretic insurance pricing both depend on a
+stochastic short rate. We adopt the Vasicek (1977) model
+\begin{equation}
+\mathrm{d}r_t = a (b - r_t)\, \dt + \sigma_r\, \dW_t,
+\label{eq:vasicek}
+\end{equation}
+whose transition law is Gaussian with closed form
+\begin{equation*}
+r_{t + \Delta t} \mid r_t \sim \mathcal{N}\!\left(
+b + (r_t - b) e^{-a \Delta t},\
+\tfrac{\sigma_r^2}{2 a}\bigl(1 - e^{-2 a \Delta t}\bigr)
+\right).
+\end{equation*}
+Equivalently, $r_{t + \Delta t} = \alpha + \beta r_t + \varepsilon_t$
+with $\beta = e^{-a \Delta t}$, $\alpha = b(1 - \beta)$ and
+$\varepsilon_t \sim \mathcal{N}\bigl(0, \tfrac{\sigma_r^2}{2 a}(1 - \beta^2)\bigr)$ — an
+AR(1) representation whose OLS estimator is the exact MLE. We invert
+the mapping to recover $(a, b, \sigma_r)$ and report analytical standard
+errors via the delta method. The closed-form zero-coupon bond price
+\begin{equation*}
+P(t, T \mid r_t) = \exp\bigl(A(t, T) - B(t, T) r_t\bigr),
+\quad B(t, T) = \frac{1 - e^{-a(T - t)}}{a},
+\end{equation*}
+\begin{equation*}
+A(t, T) = \Bigl(b - \tfrac{\sigma_r^2}{2 a^2}\Bigr)\bigl(B(t, T) - (T - t)\bigr) - \tfrac{\sigma_r^2 B(t, T)^2}{4 a},
+\end{equation*}
+is used in the option-theoretic insurance pricing of
+\cref{sec:insurance}. The MLE is run on monthly France 10-year sovereign
+yields (FRED \texttt{IRLTLT01FRM156N}, \dataOatN{} observations). The fitted estimates
+are $\hat a = \paramVasicekA{}$, $\hat b = \paramVasicekB{}$ and
+$\hat\sigma_r = \paramVasicekSigma{}$. The implied mean-reversion half-life
+is decades; for a ten-year horizon this is effectively a near-random-walk,
+which reflects the secular decline of European rates from the 1980s to
+2020. Negative rates are permitted, consistent with the Eurozone reality of
+2015--2022.
+
+\Cref{fig:price-index} plots the Notaires-INSEE Paris price index used as
+the empirical anchor for $\mu, \sigma$; the embedded inset shows the
+quarterly log-returns that drive the calibration.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_paris_price_index.pdf}
+  \caption{Notaires-INSEE Paris residential price index, with French /
+  euro-area recession episodes shaded. The inset reports the quarterly
+  log-returns used in GBM / Merton MLE.}
+  \label{fig:price-index}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig_calibration_diagnostics.pdf}
+  \caption{Calibration diagnostics. Panels (a)--(b): Paris quarterly
+  log-returns vs the fitted GBM Gaussian. Panel (c): AR(1) residuals of
+  the Vasicek MLE on OAT 10Y. Panel (d): ACF of squared Paris
+  log-returns, with the 95\% confidence band; first-lag positive
+  autocorrelation is the empirical signature of volatility clustering.}
+  \label{fig:calib}
+\end{figure}
+
+\input{tables/calibrated_params}

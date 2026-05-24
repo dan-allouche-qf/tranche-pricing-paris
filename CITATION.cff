@@ -1,0 +1,54 @@
+cff-version: 1.2.0
+title: >-
+  Selling Property Rental Ownership — A Hybrid Real Estate Model
+message: >-
+  If you use this software or the accompanying working paper in your
+  research, please cite both the repository and the report.
+type: software
+authors:
+  - given-names: Dan
+    family-names: Allouche
+    email: danallouche26@gmail.com
+abstract: >-
+  Reproducible Monte Carlo pricing pipeline that compares three real-estate
+  ownership structures (full single-apartment, SAS pooled share, CDO-style
+  senior / mezzanine / equity tranches) on the Paris residential rental
+  market, calibrated on Notaires de France, INSEE and Banque de France
+  data. Three credit models (Gaussian one-factor copula, Student-t copula,
+  Cox doubly stochastic intensity), Vasicek short rate, Andersen-Sidenius-
+  Basu waterfall with optional overcollateralisation test, antithetic and
+  Sobol QMC variance reduction. Working paper compiles to ≈ 31 pages
+  including derivations and three appendices.
+keywords:
+  - quantitative-finance
+  - credit-risk
+  - cdo
+  - tranche-pricing
+  - real-estate
+  - monte-carlo
+  - copula
+  - vasicek
+  - merton-jump-diffusion
+  - paris
+  - working-paper
+license: MIT
+version: 0.1.0
+date-released: "2026-05-21"
+url: "https://github.com/dan-allouche-qf/tranche-pricing-paris"
+repository-code: "https://github.com/dan-allouche-qf/tranche-pricing-paris"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.000000"
+    description: >-
+      Placeholder DOI. Update after depositing on Zenodo via the GitHub
+      Zenodo integration.
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Dan
+      family-names: Allouche
+  title: >-
+    Selling Property Rental Ownership — A Multi-Model Tranche-Pricing Study
+    of Paris Residential Rent
+  year: 2026
+  month: 5

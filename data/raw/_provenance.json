@@ -1,0 +1,58 @@
+{
+  "case_shiller_us": {
+    "end": "2026-02-01",
+    "label": "US S&P / Case-Shiller national home price index (FRED CSUSHPISA)",
+    "retrieved_at": "2026-05-18T23:40:45+00:00",
+    "rows": 470,
+    "start": "1987-01-01",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CSUSHPISA"
+  },
+  "ecb_yield_10y": {
+    "end": "2026-05-15",
+    "label": "Euro-area AAA government 10Y spot rate (ECB SDW)",
+    "retrieved_at": "2026-05-18T23:40:45+00:00",
+    "rows": 5544,
+    "start": "2004-09-06",
+    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?format=csvdata"
+  },
+  "ff_europe_3factors": {
+    "end": "2026-03-31",
+    "label": "Kenneth-French European 3 factors (monthly)",
+    "retrieved_at": "2026-05-18T23:41:09+00:00",
+    "rows": 429,
+    "start": "1990-07-31",
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Europe_3_Factors_CSV.zip"
+  },
+  "insee_irl": {
+    "end": "2026-03-31",
+    "label": "Indice de R\u00e9f\u00e9rence des Loyers (INSEE)",
+    "retrieved_at": "2026-05-18T23:40:45+00:00",
+    "rows": 94,
+    "start": "2002-12-31",
+    "url": "https://bdm.insee.fr/series/sdmx/data/SERIES_BDM/001515333"
+  },
+  "insee_unemployment": {
+    "end": "2026-03-31",
+    "label": "France ILO unemployment rate, seasonally adjusted (INSEE)",
+    "retrieved_at": "2026-05-20T13:50:57+00:00",
+    "rows": 205,
+    "start": "1975-03-31",
+    "url": "https://bdm.insee.fr/series/sdmx/data/SERIES_BDM/001688526"
+  },
+  "notaires_paris": {
+    "end": "2025-12-31",
+    "label": "Paris flats price index (Notaires de France / INSEE, base 100 = 2015)",
+    "retrieved_at": "2026-05-18T23:40:44+00:00",
+    "rows": 136,
+    "start": "1992-03-31",
+    "url": "https://bdm.insee.fr/series/sdmx/data/SERIES_BDM/010567013"
+  },
+  "oat_10y": {
+    "end": "2026-04-01",
+    "label": "France 10-year sovereign yield (FRED IRLTLT01FRM156N)",
+    "retrieved_at": "2026-05-18T23:40:45+00:00",
+    "rows": 796,
+    "start": "1960-01-01",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01FRM156N"
+  }
+}

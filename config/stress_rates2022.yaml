@@ -1,0 +1,30 @@
+# =============================================================================
+# Stress scenario: 2022 rate-hike cycle replay
+# =============================================================================
+# Overlays on top of paris_intermediate. Replays the ECB / OAT hiking cycle
+# from 2022-Q2 onwards (cumulative ~+200 bps over 12 months). Mortgage credit
+# tightens, default risk rises modestly, price growth turns negative.
+# =============================================================================
+
+extends: paris_intermediate.yaml
+
+scenario:
+  name: stress_rates2022
+  description: "2022 rate-hike cycle replay (+200 bps over one year, held)."
+
+overlay:
+  rates:
+    delta_bps: 200            # cumulative shock, held flat thereafter
+    duration_years: 10
+
+  price_dynamics:
+    mu_shift_pct: -0.030      # mortgage stress reduces effective demand
+    sigma_multiplier: 1.2
+    duration_years: 3
+
+  credit:
+    pd_multiplier: 1.4
+    duration_years: 3
+
+reporting:
+  highlight_tail_in_figures: true

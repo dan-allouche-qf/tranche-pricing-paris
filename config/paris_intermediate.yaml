@@ -1,0 +1,50 @@
+# =============================================================================
+# Paris intermediate scenario
+# =============================================================================
+# Realistic Haussmannian-style building in the 10e / 11e / 12e / 14e
+# arrondissements. Targets a grand-public investor profile. All numerical
+# guesses below are starting points for MLE / GMM; final fitted values land in
+# data/processed/calibrated_params.yaml.
+# =============================================================================
+
+extends: default.yaml
+
+scenario:
+  name: paris_intermediate
+  description: >-
+    Realistic Paris case. ~70 apartments (Haussmannian scale), 10e/11e/12e/14e
+    arrondissements, intermediate investor profile, calibrated on Notaires de
+    France, INSEE IRL, Banque de France OAT and Visale/ANIL public series.
+
+building:
+  n_apartments: 70
+  surface_per_apt_m2: 45
+  horizon_years: 10
+  steps_per_year: 12
+  initial_price_per_m2_eur: 10000   # Notaires median Paris ~2024-2025
+
+rent:
+  gross_yield_initial: 0.035        # Meilleurs Agents / Clameur intermediate Paris
+
+price_dynamics:
+  model: gbm
+  mu_init: 0.025
+  sigma_init: 0.05
+
+rates:
+  a_init: 0.18
+  b_init: 0.025
+  sigma_r_init: 0.012
+
+credit:
+  pd_annual_init: 0.03
+  gaussian_copula:
+    rho_init: 0.15
+
+monte_carlo:
+  n_sims: 50000
+  seed: 20260519
+
+data_window:
+  start: "1996-01-01"
+  end: "2025-12-31"

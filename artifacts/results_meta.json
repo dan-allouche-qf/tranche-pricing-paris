@@ -1,0 +1,58 @@
+{
+  "scenario": "paris_intermediate",
+  "n_paths": 50000,
+  "par_eur": 31500000.0,
+  "horizon_years": 10,
+  "pd_terminal": 0.2625758731050719,
+  "rho": 0.15,
+  "initial_rate": 0.036749000000000004,
+  "discount_convention": "constant_at_initial_rate",
+  "gbm_params": {
+    "mu": 0.033455952853851834,
+    "sigma": 0.040764288526422186
+  },
+  "vasicek_params": {
+    "a": 0.01629580752681131,
+    "b": 0.044001599922384164,
+    "sigma_r": 0.007837075104791681
+  },
+  "lgd_params": {
+    "mean": 0.85,
+    "std": 0.12
+  },
+  "insurance": {
+    "actuarial": {
+      "expected_loss_per_path_mean": 6325818.342908928,
+      "expected_loss_per_path_std": 3325001.310939754,
+      "lump_sum_premium": 7457150.373840785,
+      "annual_premium": 745715.0373840785,
+      "admin_loading": 0.1,
+      "risk_loading": 0.15,
+      "coverage_cap": 0.9
+    },
+    "option_theoretic": {
+      "lump_sum_premium": 5215535.701418763,
+      "annual_premium": 521553.5701418763,
+      "premium_pv_per_rent_pv": 0.4822970630165224,
+      "coverage_cap": 0.9,
+      "deductible_months": 1
+    }
+  },
+  "fair_coupons": {
+    "gaussian_copula": {
+      "senior": NaN,
+      "mezzanine": NaN,
+      "equity": 0.0
+    },
+    "student_t_copula": {
+      "senior": NaN,
+      "mezzanine": NaN,
+      "equity": 0.0
+    },
+    "cox_intensity": {
+      "senior": NaN,
+      "mezzanine": NaN,
+      "equity": 0.0
+    }
+  }
+}

@@ -1,0 +1,65 @@
+\clearpage
+\appendix
+\section{Data sources}\label{app:data}
+
+This appendix documents every external series ingested by
+\texttt{tranche-cli data}. Retrieval timestamps and content hashes are
+persisted at \texttt{data/raw/\_provenance.json} so the working paper can
+be audited against the exact rows used in
+\texttt{artifacts/results.csv}.
+
+\paragraph{Notaires de France / INSEE Paris flats price index.}
+INSEE BDM series \texttt{010567013}: ``Indice des prix des logements
+anciens — Paris — Appartements — Base 100 en moyenne annuelle 2015 — Série
+CVS''. Quarterly observations from \dataParisStart{} through
+\dataParisEnd{} ($n = \dataParisN{}$). Public access via the BDM SDMX
+endpoint \texttt{https://bdm.insee.fr/series/sdmx/data/SERIES\_BDM/010567013}.
+We fit GBM and Merton on the quarterly log-returns. Sample notes: the
+Paris series was rebased after 2015 (the original 100-base year changed
+from 2010), and the post-2020 leg shows the strongest negative
+log-returns of the full window — consistent with the recession-shaded
+panels of \cref{fig:price-index}.
+
+\paragraph{Indice de Référence des Loyers (INSEE).}
+INSEE BDM series \texttt{001515333}, the legal benchmark for residential
+rent indexation in France since 2008. Quarterly. We use it only as a
+sanity check on the rent-indexation assumption (constant gross yield in
+the baseline scenario); no MLE is run on it directly.
+
+\paragraph{French 10Y sovereign yield (OAT 10Y).}
+FRED series \texttt{IRLTLT01FRM156N} (``Long-Term Government Bond Yields:
+10-year: Main (Including Benchmark) for France''), monthly,
+$\dataOatN{}$ observations. Cross-checked against Banque de France
+WebStat. Vasicek MLE on the Gaussian transition density yields
+$\hat a = \paramVasicekA{}$, $\hat b = \paramVasicekB{}$,
+$\hat\sigma_r = \paramVasicekSigma{}$.
+
+\paragraph{ECB AAA euro-area 10Y spot rate.}
+Cross-validation only. SDW dataset \texttt{YC}, series key
+\texttt{B.U2.EUR.4F.G\_N\_A.SV\_C\_YM.SR\_10Y}. Daily, $\sim$5\,000
+observations 2004–2026. The fitted level is materially below the OAT
+sample mean — the euro-area AAA basket is dominated by German bunds, so
+the levels naturally differ from French sovereign yields.
+
+\paragraph{Case-Shiller US national index.}
+FRED \texttt{CSUSHPISA}, monthly. Sole purpose: a sanity check on the GBM
+calibration ($\hat\mu, \hat\sigma$ for Paris should not be dramatically
+different from a comparable mature market). The Case-Shiller drawdowns of
+2007–2011 are far deeper than anything in our Paris sample, which is one
+reason the Merton MLE on Paris alone does not identify a jump component
+(see \cref{tab:calibration}).
+
+\paragraph{Kenneth French European 3-factor monthly file.}
+Tuck-Dartmouth zip distribution. Monthly. We use the risk-free rate (RF)
+series only to corroborate the OAT-derived discount rate; the market and
+size factors are not consumed by the pricing pipeline.
+
+\paragraph{Visale / ANIL — rental-arrears proxy.}
+Visale is the public guarantee operated by Action Logement; ANIL
+publishes annual surveys of payment defaults in the private rental
+sector. Both ship as PDF tables, not programmatically. We treat the
+aggregate annual default rate (around 1.5 – 3 \% over the past decade)
+as the prior for $p_d$ in our credit calibration; the copula correlation
+$\rho$ is unidentified from a single building and is discussed as a
+sensitivity in \cref{sec:results}. The integration of
+granular Visale claims data is left as future work.

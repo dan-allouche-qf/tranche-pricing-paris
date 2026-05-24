@@ -1,0 +1,64 @@
+\section{Reproducibility, packaging and CI}\label{app:reproducibility}
+
+The repository ships every artefact a reviewer needs to verify the claims
+of this paper. A clean reproduction from a fresh checkout looks like:
+
+\begin{verbatim}
+git clone https://github.com/dan-allouche-qf/tranche-pricing-paris.git
+cd tranche-pricing-paris
+make install          # editable install with dev + notebook extras
+make all              # data -> calibrate -> mc -> figures -> report
+\end{verbatim}
+
+The single \texttt{make all} target chains six independent steps —
+\texttt{data}, \texttt{calibrate}, \texttt{mc}, \texttt{figures},
+\texttt{notebooks}, \texttt{report} — that can also be invoked
+individually. The total wall-clock time on a recent laptop is around
+three minutes at $N = 50\,000$ Monte Carlo paths.
+
+\paragraph{Continuous integration.}
+The repository runs a GitHub Actions workflow
+(\texttt{.github/workflows/ci.yml}) on every push to \texttt{main}:
+
+\begin{enumerate}
+  \item A test matrix over \texttt{ubuntu-latest} $\times$
+        \texttt{macos-latest} $\times$ Python \{3.11, 3.12\} that runs
+        \texttt{ruff check}, \texttt{ruff format --check},
+        \texttt{mypy} (best effort) and \texttt{pytest -m "not slow and
+        not integration"}. 175 unit tests pass at the time of release.
+  \item A \texttt{pre-commit} job that runs the same hooks reviewers
+        would run locally (\texttt{ruff}, \texttt{nbstripout},
+        end-of-file fixer, trailing-whitespace, YAML lint).
+  \item A \texttt{build-report} job that re-runs the headline pipeline
+        at $N = 2\,000$ paths, regenerates the tables via
+        \texttt{report/build\_tables.py}, compiles the LaTeX with
+        \texttt{xu-cheng/latex-action} and uploads \texttt{main.pdf}
+        as a workflow artefact. This means every push produces a
+        reviewable PDF without anyone having to install \LaTeX{} locally.
+\end{enumerate}
+
+\paragraph{Packaging.} \texttt{CHANGELOG.md} follows the
+keepachangelog.com convention. \texttt{CITATION.cff} drives the GitHub
+``Cite this repository'' widget and is ready for a Zenodo DOI deposit.
+The Streamlit Community Cloud deploy is wired through
+\texttt{.streamlit/config.toml} with theming aligned to the project
+palette so the dashboard and the working paper read as a single
+artefact.
+
+\paragraph{Data provenance.} Every external series is downloaded by the
+\texttt{tranche-cli data} subcommand, written to \texttt{data/raw/}, and
+recorded in \texttt{data/raw/\_provenance.json} with the source URL, row
+count, retrieval timestamp and observation window. The Visale snapshot
+is the only manually maintained series and ships with an extraction
+protocol in \texttt{data/DATA\_SOURCES.md}.
+
+\paragraph{Testing strategy.} Unit tests cover the parsers, calibration
+MLEs (closed-form and numerical), credit-model marginals and tail
+dependence, waterfall mechanics (hand-computed invariants plus
+\texttt{hypothesis} property tests), the bootstrap CI helper and the
+risk-metric library. The integration test
+(\texttt{tests/integration/test\_end\_to\_end.py}) runs the full
+pipeline at \texttt{n\_paths = 200} and asserts the schema of
+\texttt{results.csv}, including the bootstrap CI bracket and the
+fair-coupon sidecar. A companion test compiles the \LaTeX{} report
+under \texttt{latexmk} when the binary is available.

@@ -1,0 +1,65 @@
+\section{Introduction}\label{sec:intro}
+
+French residential real estate is an idiosyncratic asset class for
+retail investors. The price process mean-reverts slowly; the rental
+cash flow is heterogeneous and exposed to tenant-specific default risk;
+and the legal framework around eviction, the \textit{Indice de Référence
+des Loyers} and the Visale guarantee shapes realised loss in ways that
+do not map cleanly onto traded credit instruments.
+
+This paper asks whether, given the same underlying building, a tranched
+cash-flow structure can deliver a different risk-return profile from
+outright ownership or a classical SAS pool. We formalise three
+investment vehicles --- Model A: single-apartment ownership; Model B: a
+pro-rata SAS share; Model C: a CDO-style senior / mezzanine / equity
+tranche stack --- and compute their fair price and risk metrics on the
+same set of Monte Carlo paths.
+
+The simulation pipeline is calibrated on \dataParisN{} quarters of
+Notaires-INSEE Paris price data and \dataOatN{} months of OAT 10Y data;
+every numerical estimate quoted in the paper is traceable to a row of
+\texttt{artifacts/results.csv} produced by the same code. The credit
+layer juxtaposes the Gaussian one-factor copula
+\autocite{Li2000, Vasicek2002}, the Student-t copula
+\autocite{EmbrechtsMcNeilStraumann2002}, and a Cox doubly stochastic
+intensity \autocite{DuffieSingleton2003}, so the tail dependence that
+the Gaussian benchmark silently sets to zero becomes visible at the
+senior attach point. The rental-default insurance is priced both by the
+actuarial standard-deviation principle and as a put on rent shortfall,
+and the gap between the two is reported.
+
+\subsection{Literature context}
+
+The CDO tranching mechanic borrows from two modelling traditions. The
+structural side originates with \autocite{BlackScholes1973} and
+\autocite{Merton1976}: a firm defaults when its asset value crosses a
+threshold, with the asset following a geometric Brownian motion. The
+reduced-form side, started by \autocite{DuffieSingleton2003} and
+expanded by \autocite{Schonbucher2003}, treats default as the first
+jump of a Cox process driven by an exogenous hazard. The Cox
+doubly-stochastic credit model in \cref{ssec:cox} is the canonical
+example of the reduced-form mechanic with a CIR-like macro factor.
+
+Copula-based pricing of multi-name credit baskets took off with
+\autocite{Li2000}, which mapped default times into a joint Gaussian
+distribution; \autocite{Vasicek2002} provided the large-portfolio
+closed form that became the industry workhorse for CDO tranche pricing.
+\autocite{EmbrechtsMcNeilStraumann2002} pointed out that the Gaussian
+copula misses tail dependence, and \autocite{DonnellyEmbrechts2010}
+quantified the implication for senior-tranche pricing in the subprime
+crisis. \autocite{MacKenzieSpears2014} traces the Li (2000) formula's
+twin role as industry standard and post-crisis scapegoat. The
+Student-t copula benchmark in \cref{ssec:t-copula} is the alternative
+that this strand of literature recommends.
+
+The waterfall mechanic follows \autocite{AndersenSideniusBasu2003}: a
+notional-depleting senior / mezzanine / equity stack with separate
+interest and principal cascades. The contribution of the paper is not
+in the modelling primitives, which are standard; it is in the
+consistent calibration of those primitives on the public French
+residential-rent dataset, juxtaposed with two retail benchmarks
+(single-apartment ownership and a SAS pooled share) on a shared Monte
+Carlo seed. The variance-reduction tooling follows
+\autocite{Glasserman2003} for antithetic sampling and
+\autocite{Owen1997} for scrambled Sobol QMC; risk measurement uses the
+coherent expected-shortfall framework of \autocite{AcerbiTasche2002}.

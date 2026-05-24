@@ -1,0 +1,146 @@
+# =============================================================================
+# Default scenario configuration
+# =============================================================================
+# Holds every structural and methodological choice required to reproduce the
+# Monte Carlo pipeline. Numerical estimates are NOT stored here: they live in
+# data/processed/calibrated_params.yaml after `make calibrate` has run. The
+# values below are either contract terms (attach/detach), pipeline knobs
+# (n_sims, horizon) or optimisation starting points.
+# =============================================================================
+
+scenario:
+  name: default
+  description: "Generic 8-apartment toy building. See paris_intermediate.yaml for the realistic Paris case."
+
+# --------------------------------------------------------------------------- #
+# Property layer                                                              #
+# --------------------------------------------------------------------------- #
+building:
+  n_apartments: 8           # toy building; scaled to 50–100 in paris_intermediate
+  surface_per_apt_m2: 50    # average flat surface
+  horizon_years: 10         # contract horizon
+  steps_per_year: 12        # monthly discretisation of cash flows and dynamics
+  initial_price_per_m2_eur: 5000   # initial guess only; overridden by calibration
+
+# --------------------------------------------------------------------------- #
+# Rent layer                                                                  #
+# --------------------------------------------------------------------------- #
+rent:
+  gross_yield_initial: 0.05         # rent / building value at t = 0; starting guess
+  rent_indexation: irl              # rent growth indexed to INSEE IRL by default
+  vacancy_rate: 0.05                # baseline vacancy assumption
+  maintenance_pct_of_value: 0.015   # annual maintenance, % of building value
+
+# --------------------------------------------------------------------------- #
+# Price dynamics                                                              #
+# --------------------------------------------------------------------------- #
+price_dynamics:
+  model: gbm                # gbm | merton
+  mu_init: 0.02             # MLE starting point only
+  sigma_init: 0.06
+  merton:
+    lambda_init: 0.5
+    mu_jump_init: -0.05
+    sigma_jump_init: 0.08
+
+# --------------------------------------------------------------------------- #
+# Short rate (used for discounting and option-theoretic insurance pricing)    #
+# --------------------------------------------------------------------------- #
+rates:
+  model: vasicek
+  a_init: 0.20
+  b_init: 0.02
+  sigma_r_init: 0.01
+
+# --------------------------------------------------------------------------- #
+# Credit                                                                      #
+# --------------------------------------------------------------------------- #
+credit:
+  models: [gaussian_copula, student_t_copula, cox_intensity]
+  default_model: gaussian_copula
+  pd_annual_init: 0.03      # marginal annual PD per apartment, calibration prior
+  gaussian_copula:
+    rho_init: 0.15
+    rho_grid: [0.05, 0.15, 0.30, 0.50]  # sensitivity plot
+  student_t_copula:
+    rho_init: 0.15
+    nu_grid: [3, 5, 8, 30]
+  cox_intensity:
+    alpha_init: 0.005
+    beta_init: 1.0
+    kappa_init: 0.30
+    theta_init: 0.03
+    xi_init: 0.05
+
+# --------------------------------------------------------------------------- #
+# Loss-given-default (Beta on annual rent lost)                               #
+# --------------------------------------------------------------------------- #
+lgd:
+  distribution: beta
+  mean_init: 0.85
+  std_init: 0.12
+
+# --------------------------------------------------------------------------- #
+# CDO tranches                                                                #
+# --------------------------------------------------------------------------- #
+tranches:
+  - name: equity
+    attach: 0.00
+    detach: 0.25
+  - name: mezzanine
+    attach: 0.25
+    detach: 0.60
+  - name: senior
+    attach: 0.60
+    detach: 1.00
+
+waterfall:
+  type: andersen_sidenius   # asb (2003) notional-depleting
+  oc_test_enabled: false
+
+# --------------------------------------------------------------------------- #
+# Insurance                                                                   #
+# --------------------------------------------------------------------------- #
+insurance:
+  enabled_scenarios: [false, true]
+  actuarial:
+    admin_loading: 0.10
+    risk_loading: 0.15
+  option_theoretic:
+    deductible_months: 1
+  coverage_cap: 0.90
+
+# --------------------------------------------------------------------------- #
+# Monte Carlo                                                                 #
+# --------------------------------------------------------------------------- #
+monte_carlo:
+  n_sims: 50000
+  seed: 20260519
+  antithetic: true
+  control_variates: true
+  qmc:
+    enabled: true
+    engine: sobol
+    scramble: true
+  bootstrap_resamples: 1000
+
+# --------------------------------------------------------------------------- #
+# Risk metrics                                                                #
+# --------------------------------------------------------------------------- #
+risk:
+  var_alpha: [0.95, 0.99]
+  es_alpha: [0.95, 0.99]
+  sortino_target: risk_free
+  omega_threshold: 0.0
+  benchmark_series: notaires_paris
+  # Discount convention for tranche cash flows:
+  #   vasicek_simulated         — discount along the simulated short-rate path
+  #   constant_at_initial_rate  — use exp(-r0 * t_k) deterministically
+  discount_convention: constant_at_initial_rate
+
+# --------------------------------------------------------------------------- #
+# Data window                                                                 #
+# --------------------------------------------------------------------------- #
+data_window:
+  start: "1996-01-01"
+  end: "2025-12-31"

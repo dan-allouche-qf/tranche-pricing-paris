@@ -1,0 +1,87 @@
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+build/
+dist/
+.eggs/
+.installed.cfg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+.venv*/
+venv/
+env/
+.python-version
+
+# -----------------------------------------------------------------------------
+# Testing & type checking
+# -----------------------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.hypothesis/
+
+# -----------------------------------------------------------------------------
+# Jupyter
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# -----------------------------------------------------------------------------
+# Data
+# -----------------------------------------------------------------------------
+# Cache only — raw snapshots and processed calibration outputs are committed
+# so the report and the dashboard browse cleanly without re-running the
+# fetcher pipeline.
+data/interim/
+data/.cache/
+
+# -----------------------------------------------------------------------------
+# LaTeX build
+# -----------------------------------------------------------------------------
+report/*.aux
+report/*.bbl
+report/*.bcf
+report/*.blg
+report/*.fdb_latexmk
+report/*.fls
+report/*.log
+report/*.out
+report/*.run.xml
+report/*.synctex.gz
+report/*.toc
+report/sections/*.aux
+report/sections/*.log
+
+# -----------------------------------------------------------------------------
+# Secrets / environment
+# -----------------------------------------------------------------------------
+.env
+.env.local
+
+# -----------------------------------------------------------------------------
+# Node (defensive — no Node code in repo but easy to add accidentally)
+# -----------------------------------------------------------------------------
+node_modules/
+
+# -----------------------------------------------------------------------------
+# OS / Editor
+# -----------------------------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

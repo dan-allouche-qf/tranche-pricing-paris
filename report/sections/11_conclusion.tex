@@ -1,0 +1,25 @@
+\section{Conclusion}\label{sec:conclusion}
+
+We have assembled a fully reproducible pricing pipeline for a hybrid
+real-estate investment structure inspired by the synthetic CDO mechanism
+but applied to the rental cash flows of a Paris residential building.
+Every parameter is calibrated on publicly available French data; every
+numerical result reported here is traceable to the same Monte Carlo run
+that wrote \texttt{artifacts/results.csv}.
+
+The headline finding is that the structure is feasible: a senior tranche
+attaching at 60\% prices close to par with a probability of negative
+annualised return of \probNegSenior{} on the Paris-intermediate
+calibration, while the equity tranche delivers a long-tailed payoff with
+\probNegEquity{} probability of loss. The choice of credit model matters
+quantitatively: switching from the Gaussian one-factor copula to a
+Student-t copula with $\nu = 5$ drops the senior fair-value-to-par from
+\seniorFairGauss{} to \seniorFairStudent{} and widens the fair coupon by
+roughly twelve basis points, the empirical analogue of the
+Donnelly-Embrechts critique. The two classical benchmarks --- single-
+apartment ownership and the SAS pool --- carry distinct risk profiles
+even when matched on expected return, so the tranching choice is not
+cosmetic.
+
+The pipeline is open source and available at
+\texttt{tranche-pricing-paris}.

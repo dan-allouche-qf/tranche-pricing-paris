@@ -1,0 +1,106 @@
+\section{Code architecture}\label{app:architecture}
+
+The pipeline is implemented as a flat \texttt{src/tranche\_pricing/}
+package, with sub-packages aligned on the conceptual phases of the
+working paper. Imports flow strictly downstream: data $\rightarrow$
+markets / credit $\rightarrow$ waterfall $\rightarrow$ simulation
+$\rightarrow$ pricing $\rightarrow$ viz, mirroring the section ordering of
+this paper.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=1.1cm and 0.9cm,
+  box/.style={rectangle, draw=black!60, rounded corners=2pt, minimum width=2.5cm,
+              minimum height=0.7cm, font=\small, align=center, thick},
+  data/.style={box, fill=blue!8},
+  calib/.style={box, fill=orange!12},
+  sim/.style={box, fill=green!10},
+  price/.style={box, fill=red!8},
+  viz/.style={box, fill=violet!10},
+  output/.style={box, fill=black!8, font=\small\ttfamily},
+  arrow/.style={-Stealth, thick, black!50},
+]
+  \node[data] (data) {data};
+  \node[calib, right=of data] (calib) {calibration};
+  \node[sim, right=of calib] (sim) {simulation};
+  \node[price, right=of sim] (price) {pricing};
+  \node[viz, right=of price] (viz) {viz};
+
+  \node[box, above=0.4cm of calib, font=\small\ttfamily, fill=blue!4]
+       (markets) {markets};
+  \node[box, above=0.4cm of sim, font=\small\ttfamily, fill=blue!4]
+       (credit) {credit};
+  \node[box, above=0.4cm of price, font=\small\ttfamily, fill=blue!4]
+       (water) {waterfall};
+  \node[box, below=0.4cm of price, font=\small\ttfamily, fill=blue!4]
+       (risk) {risk};
+  \node[box, below=0.4cm of sim, font=\small\ttfamily, fill=blue!4]
+       (insurance) {insurance};
+
+  \node[output, below=1.1cm of viz] (report) {report/};
+  \node[output, below=0.3cm of report] (dash) {dashboard/};
+  \node[output, above=1.0cm of viz] (csv) {artifacts/*.csv};
+
+  \draw[arrow] (data) -- (calib);
+  \draw[arrow] (calib) -- (sim);
+  \draw[arrow] (sim) -- (price);
+  \draw[arrow] (price) -- (viz);
+
+  \draw[arrow] (markets) -- (calib);
+  \draw[arrow] (credit) -- (sim);
+  \draw[arrow] (water) -- (price);
+  \draw[arrow] (insurance) -- (price);
+  \draw[arrow] (risk) -- (price);
+
+  \draw[arrow] (viz) -- (report);
+  \draw[arrow] (viz) -- (dash);
+  \draw[arrow] (price) |- (csv);
+\end{tikzpicture}
+\caption{High-level dataflow across the \texttt{src/tranche\_pricing/}
+sub-packages. Five primary stages (rounded boxes left-to-right) consume
+the supporting modules (lighter boxes top / bottom) and emit the three
+artefact families on the right (CSV, LaTeX report, Streamlit dashboard).}
+\label{fig:architecture}
+\end{figure}
+
+\paragraph{Data flow.}
+\begin{enumerate}
+  \item \texttt{tranche-cli data} fetches every external series via
+        \texttt{data/*.py}, caches it under \texttt{data/.cache/}, and
+        writes \texttt{data/raw/*.csv} plus a provenance JSON log.
+  \item \texttt{tranche-cli calibrate} runs
+        \texttt{calibration/runner.py::run\_all}, which calls the three
+        MLEs (GBM closed form, Merton multi-start, Vasicek closed form)
+        and serialises everything to
+        \texttt{data/processed/calibrated\_params.yaml}.
+  \item \texttt{tranche-cli mc} loads the calibrated parameters,
+        constructs a \texttt{SimulationConfig} from the active YAML
+        scenario, runs \texttt{pricing/model\_compare.compare\_credit\_models}
+        for the three credit models, solves fair coupons via
+        \texttt{tranche\_pricer.solve\_fair\_coupons\_for\_all}, prices
+        the insurance pass with the per-tranche premium allocation, and
+        writes \texttt{artifacts/results.csv},
+        \texttt{artifacts/fair\_coupons.csv} and
+        \texttt{artifacts/results\_meta.json}.
+  \item \texttt{report/build\_tables.py} reads those artefacts and
+        regenerates the LaTeX tables consumed by every section above.
+\end{enumerate}
+
+\paragraph{Configuration discipline.}
+Every scenario lives in a YAML under \texttt{config/} validated against
+the Pydantic v2 schemas in \texttt{src/tranche\_pricing/config.py}.
+Schemas use \texttt{extra="forbid"} so a typo in the YAML fails fast.
+The \texttt{extends:} field implements a single level of inheritance with
+deep merging, so the stress overlays (\texttt{stress\_gfc.yaml} \emph{et
+al.}) need only declare the perturbations.
+
+\paragraph{Variance reduction and reproducibility.}
+A single master seed flows through a \texttt{numpy.random.SeedSequence}
+that spawns five named sub-streams: \texttt{price, rate, credit, lgd,
+qmc}. The engine is bit-identical reproducible across runs (verified in
+\texttt{tests/unit/test\_engine.py::test\_engine\_is\_deterministic\_under\_same\_seed}).
+Antithetic sampling is applied to every Gaussian draw used in the price,
+rate and copula common-factor streams; Sobol QMC (scrambled, scipy
+\texttt{qmc.Sobol}) is available as a config switch for the copula
+factor.
